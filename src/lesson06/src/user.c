@@ -14,7 +14,7 @@ void loop(char* str)
 	}
 }
 
-void user_process() 
+void user_process()
 {
 	call_sys_write("User process\n\r");
 	int pid = call_sys_fork();

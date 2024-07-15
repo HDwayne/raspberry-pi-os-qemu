@@ -23,5 +23,5 @@ cpu_switch_to:
 	ldp	x29, x9, [x8], #16
 	ldr	x30, [x8]				// x30 == LR
 	mov	sp, x9
-	ret							// jump to where LR points to 
+	ret							// jump to where LR points to
 

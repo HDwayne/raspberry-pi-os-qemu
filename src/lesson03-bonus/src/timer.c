@@ -7,10 +7,10 @@
 //unsigned int interval = 9600000;
 #ifdef USE_QEMU
 //unsigned int interval = (1 << 26); // xzl: around 1 sec
-unsigned int interval = (1 << 26) / 30; 
+unsigned int interval = (1 << 26) / 30;
 #else
 // unsigned int interval = 1 * 1000 * 1000; // xzl: around 1 sec
-unsigned int interval = 30 * 1000; 
+unsigned int interval = 30 * 1000;
 #endif
 
 unsigned int curVal = 0;
@@ -22,7 +22,7 @@ void timer_init ( void )
 	put32(TIMER_C1, curVal);
 }
 
-void handle_timer_irq( void ) 
+void handle_timer_irq( void )
 {
 	curVal += interval;
 	put32(TIMER_C1, curVal);
@@ -48,7 +48,7 @@ void generic_timer_init ( void )
 	gen_timer_reset(interval);
 }
 
-void handle_generic_timer_irq( void ) 
+void handle_generic_timer_irq( void )
 {
 	// printf("Timer interrupt received. next in %u ticks\n\r", interval);
 	gen_timer_reset(interval);

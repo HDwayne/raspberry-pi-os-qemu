@@ -1,8 +1,8 @@
 #include "mm.h"
 #include "arm/mmu.h"
 
-/* 
-	minimalist page allocation 
+/*
+	minimalist page allocation
 */
 static unsigned short mem_map [ PAGING_PAGES ] = {0,};
 
@@ -44,26 +44,26 @@ void free_page(unsigned long p){
 	Virtual memory implementation
 */
 
-/* set a pte (at the bottom of a pgtable tree), 
+/* set a pte (at the bottom of a pgtable tree),
    so that @va is mapped to @pa. @pte: the 0-th pte of that pgtable */
 void map_table_entry(unsigned long *pte, unsigned long va, unsigned long pa) {
 	unsigned long index = va >> PAGE_SHIFT;
 	index = index & (PTRS_PER_TABLE - 1);
-	unsigned long entry = pa | MMU_PTE_FLAGS; 
+	unsigned long entry = pa | MMU_PTE_FLAGS;
 	pte[index] = entry;
 }
 
-/* Extract table index from the virtual address and prepares a descriptor 
+/* Extract table index from the virtual address and prepares a descriptor
 	in the parent table that points to the child table.
 
-   @table: a (virt) pointer to the parent page table. This page table is assumed 
+   @table: a (virt) pointer to the parent page table. This page table is assumed
    	to be already allocated, but might contain empty entries.
-   @shift: indicate where to find the index bits in a virtual address corresponding 
+   @shift: indicate where to find the index bits in a virtual address corresponding
    	to the the target pgtable level. See project description for details.
    @va: the virt address of the page to be mapped
    @new_table [out]: 1 means a new pgtable is allocated; 0 otherwise
 
-   Return: the phys addr of the next pgtable. 
+   Return: the phys addr of the next pgtable.
 */
 unsigned long map_table(unsigned long *table, unsigned long shift, unsigned long va, int* new_table) {
 	unsigned long index = va >> shift;
@@ -80,8 +80,8 @@ unsigned long map_table(unsigned long *table, unsigned long shift, unsigned long
 	return table[index] & PAGE_MASK;
 }
 
-/* map a page to the given @task at its virtual address @va. 
-   @page: the phys addr of the page start. 
+/* map a page to the given @task at its virtual address @va.
+   @page: the phys addr of the page start.
    Descend in the task's pgtable tree and alloate any absent pgtables on the way.
    */
 void map_page(struct task_struct *task, unsigned long va, unsigned long page){
@@ -91,7 +91,7 @@ void map_page(struct task_struct *task, unsigned long va, unsigned long page){
 		task->mm.kernel_pages[++task->mm.kernel_pages_count] = task->mm.pgd;
 	}
 	pgd = task->mm.pgd;
-	int new_table; 
+	int new_table;
 	/* move to the next level pgtable. allocate one if absent */
 	unsigned long pud = map_table((unsigned long *)(pgd + VA_START), PGD_SHIFT, va, &new_table);
 	if (new_table) { /* we've allocated a new kernel page. take it into account for future reclaim */

@@ -57,9 +57,9 @@ void schedule(void)
 }
 
 
-void switch_to(struct task_struct * next, int index) 
+void switch_to(struct task_struct * next, int index)
 {
-	if (current == next) 
+	if (current == next)
 		return;
 	struct task_struct * prev = current;
 	current = next;

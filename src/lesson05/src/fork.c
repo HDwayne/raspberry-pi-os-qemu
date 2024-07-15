@@ -25,8 +25,8 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
 	} else {	/* user task, pop pt_regs which always at the task's user stack top */
 		struct pt_regs * cur_regs = task_pt_regs(current);
 		*cur_regs = *childregs;
-		childregs->regs[0] = 0; /* return val of the clone() syscall */ 
-		childregs->sp = stack + PAGE_SIZE; 
+		childregs->regs[0] = 0; /* return val of the clone() syscall */
+		childregs->sp = stack + PAGE_SIZE;
 		p->stack = stack;
 	}
 	p->flags = clone_flags;
@@ -38,7 +38,7 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
 	p->cpu_context.pc = (unsigned long)ret_from_fork;
 	p->cpu_context.sp = (unsigned long)childregs;
 	int pid = nr_tasks++;
-	task[pid] = p;	
+	task[pid] = p;
 	preempt_enable();
 	return pid;
 }
@@ -46,18 +46,18 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
 
 int move_to_user_mode(unsigned long pc)
 {
-	/* convert a kernel task to a user task, which must have legit pt_regs */		
+	/* convert a kernel task to a user task, which must have legit pt_regs */
 	struct pt_regs *regs = task_pt_regs(current);
 	memzero((unsigned long)regs, sizeof(*regs));
 	regs->pc = pc;
 	regs->pstate = PSR_MODE_EL0t;
-	
+
 	/* alocate new user stack, in addition to the task's existing kernel stack */
-	unsigned long stack = get_free_page(); 
+	unsigned long stack = get_free_page();
 	if (!stack) {
 		return -1;
 	}
-	regs->sp = stack + PAGE_SIZE; 
+	regs->sp = stack + PAGE_SIZE;
 	current->stack = stack;
 	return 0;
 }

@@ -8,7 +8,7 @@
 	bl	show_invalid_entry_message
 	b	err_hang
 	.endm
-	
+
 	.macro	ventry	label
 	.align	7
 	b	\label
@@ -31,7 +31,7 @@
 	stp	x24, x25, [sp, #16 * 12]
 	stp	x26, x27, [sp, #16 * 13]
 	stp	x28, x29, [sp, #16 * 14]
-	str	x30, [sp, #16 * 15] 
+	str	x30, [sp, #16 * 15]
 	.endm
 
 	.macro	kernel_exit
@@ -50,8 +50,8 @@
 	ldp	x24, x25, [sp, #16 * 12]
 	ldp	x26, x27, [sp, #16 * 13]
 	ldp	x28, x29, [sp, #16 * 14]
-	ldr	x30, [sp, #16 * 15] 
-	add	sp, sp, #S_FRAME_SIZE		
+	ldr	x30, [sp, #16 * 15]
+	add	sp, sp, #S_FRAME_SIZE
 	eret
 	.endm
 
@@ -83,9 +83,9 @@ vectors_el2:
 	ventry	fiq_invalid_el0_32			// FIQ 32-bit EL0
 	ventry	error_invalid_el0_32			// Error 32-bit EL0
 
-	
+
 .align	11
-.globl vectors 
+.globl vectors
 vectors:
 	ventry	sync_invalid_el1t			// Synchronous EL1t
 	ventry	irq_invalid_el1t			// IRQ EL1t
@@ -156,9 +156,9 @@ error_invalid_el0_32:
 	handle_invalid_entry  ERROR_INVALID_EL0_32
 
 el1_irq:
-	kernel_entry 
+	kernel_entry
 	bl	handle_irq
-	kernel_exit 
+	kernel_exit
 
 .globl err_hang
 err_hang: b err_hang

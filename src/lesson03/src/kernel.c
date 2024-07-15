@@ -17,7 +17,7 @@ void kernel_main(void)
 	enable_irq();
 	// disable_irq();
 
-	// a = a / 0; 
+	// a = a / 0;
 	// asm("mrs x0, elr_el2"); // will trigger exception at EL1
 	// asm("hvc #0");
 	// asm("msr	hcr_el2, x0");
@@ -28,5 +28,5 @@ void kernel_main(void)
 
 	while (1){
 		uart_send(uart_recv());
-	}	
+	}
 }

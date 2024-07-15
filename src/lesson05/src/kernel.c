@@ -39,7 +39,7 @@ void user_process(){
 	if (err < 0){
 		printf("Error while clonning process 1\n\r");
 		return;
-	} 
+	}
 	stack = call_sys_malloc();
 	if (stack < 0) {
 		printf("Error while allocating stack for process 1\n\r");
@@ -49,7 +49,7 @@ void user_process(){
 	if (err < 0){
 		printf("Error while clonning process 2\n\r");
 		return;
-	} 
+	}
 	call_sys_exit();
 }
 
@@ -58,7 +58,7 @@ void kernel_process(){
 	int err = move_to_user_mode((unsigned long)&user_process);
 	if (err < 0) {
 		printf("Error while moving process to user mode\n\r");
-	} 
+	}
 }
 
 void kernel_main(void)
@@ -81,5 +81,5 @@ void kernel_main(void)
 
 	while (1) {
 		schedule();
-	}	
+	}
 }

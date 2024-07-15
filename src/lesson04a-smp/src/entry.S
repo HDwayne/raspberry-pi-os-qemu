@@ -63,9 +63,9 @@
 /*
 	.macro	kernel_exit
 	ldr	x23, [sp, #16 * 16]
-	ldp	x30, x22, [sp, #16 * 15] 
+	ldp	x30, x22, [sp, #16 * 15]
 
-	msr	elr_el1, x22			
+	msr	elr_el1, x22
 	msr	spsr_el1, x23
 
 	ldp	x0, x1, [sp, #16 * 0]
@@ -83,7 +83,7 @@
 	ldp	x24, x25, [sp, #16 * 12]
 	ldp	x26, x27, [sp, #16 * 13]
 	ldp	x28, x29, [sp, #16 * 14]
-	add	sp, sp, #S_FRAME_SIZE		
+	add	sp, sp, #S_FRAME_SIZE
 	eret
 	.endm
 */
@@ -113,7 +113,7 @@
  * Exception vectors.
  */
 .align	11
-.globl vectors 
+.globl vectors
 vectors:
 	ventry	sync_invalid_el1t			// Synchronous EL1t
 	ventry	irq_invalid_el1t			// IRQ EL1t
@@ -181,9 +181,9 @@ error_invalid_el0_32:
 	handle_invalid_entry  ERROR_INVALID_EL0_32
 
 el1_irq:
-	kernel_entry 
+	kernel_entry
 	bl	handle_irq
-	kernel_exit 
+	kernel_exit
 
 .globl ret_from_fork
 ret_from_fork:

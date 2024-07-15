@@ -14,7 +14,7 @@ void timer_init ( void )
 	put32(TIMER_C1, curVal);
 }
 
-void handle_timer_irq( void ) 
+void handle_timer_irq( void )
 {
 	curVal += interval;
 	put32(TIMER_C1, curVal);
@@ -28,7 +28,7 @@ void generic_timer_init ( void )
 	gen_timer_reset();
 }
 
-void handle_generic_timer_irq( void ) 
+void handle_generic_timer_irq( void )
 {
 	gen_timer_reset();
     timer_tick();

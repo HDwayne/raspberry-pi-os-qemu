@@ -7,7 +7,7 @@
 
 void kernel_main(void)
 {
-	char c = 0; 
+	char c = 0;
 
 	uart_init();
 	init_printf(0, putc);
@@ -32,24 +32,24 @@ void kernel_main(void)
 			case '+':
 				width += 50;
 				if (width > vwidth)
-					width = 100; 
+					width = 100;
 				height += 50;
 				if (height > vheight)
-					height = 100; 
+					height = 100;
 			break;
 			case '*':
-				width = vwidth; 
-				height = vheight; 
-			break;			
+				width = vwidth;
+				height = vheight;
+			break;
 			case '/':
 				if ((offsety += 50) > vheight)
 					offsety = 0;
 				printf("set offsety = %u\n\r", offsety);
-				lfb_update();  
+				lfb_update();
 			break;
 		}
 		delay(50 * 5000);
 		// printf("lfb_update\n\r");
 		// lfb_update();
-	}	
+	}
 }

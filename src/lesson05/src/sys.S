@@ -2,28 +2,28 @@
 
 .globl call_sys_write
 call_sys_write:
-	mov w8, #SYS_WRITE_NUMBER	
+	mov w8, #SYS_WRITE_NUMBER
 	svc #0
 	ret
 
 .globl call_sys_malloc
 call_sys_malloc:
-	mov w8, #SYS_MALLOC_NUMBER	
+	mov w8, #SYS_MALLOC_NUMBER
 	svc #0
 	ret
 
 .globl call_sys_exit
 call_sys_exit:
-	mov w8, #SYS_EXIT_NUMBER	
+	mov w8, #SYS_EXIT_NUMBER
 	svc #0
 	ret
 
 .globl call_sys_clone
 call_sys_clone:
-	/* Save args for the child. After we come from the syscall and back in the task, thread_start() 
-		(see below) will pick up fn from x10 & arg from x11. 
+	/* Save args for the child. After we come from the syscall and back in the task, thread_start()
+		(see below) will pick up fn from x10 & arg from x11.
 
-		Reason that we cannot leave them in x0/x1/x2: the syscall handler (starting from el0_svc in 
+		Reason that we cannot leave them in x0/x1/x2: the syscall handler (starting from el0_svc in
 		entry.S) does not have to preserve these regs per calling convention. */
 	mov	x10, x0					/*fn*/
 	mov	x11, x1					/*arg*/

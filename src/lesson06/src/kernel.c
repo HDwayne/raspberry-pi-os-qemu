@@ -20,7 +20,7 @@ void kernel_process(){
 	int err = move_to_user_mode(begin, end - begin, process - begin);
 	if (err < 0){
 		printf("Error while moving process to user mode\n\r");
-	} 
+	}
 }
 
 
@@ -45,5 +45,5 @@ void kernel_main()
 
 	while (1){
 		schedule();
-	}	
+	}
 }

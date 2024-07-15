@@ -19,14 +19,14 @@
 void process(char *array)
 {
 #ifdef USE_LFB // (optional) determine the init locations on the graphical console
-	int scr_x, scr_y; 
-	char c; 
+	int scr_x, scr_y;
+	char c;
 	if (array[0] == '1') {
-		scr_x = 0; scr_y = 320; 
+		scr_x = 0; scr_y = 320;
 	} else {
-		scr_x = 0; scr_y = 480; 
+		scr_x = 0; scr_y = 480;
 	}
-#endif 
+#endif
 
 	while (1){
 		for (int i = 0; i < 5; i++){
@@ -34,12 +34,12 @@ void process(char *array)
 #ifdef USE_LFB  // (optional) output to the graphical console
 			c = array[i+1]; array[i+1]='\0';
 			lfb_print_update(&scr_x, &scr_y, array+i);
-			array[i+1] = c; 
+			array[i+1] = c;
 			if (scr_x > 1024)
 				lfb_print_update(&scr_x, &scr_y, "\n");
 #endif
 			delay(CHAR_DELAY);
-		} 
+		}
 		schedule(); // yield
 	}
 }
@@ -49,20 +49,20 @@ void kernel_main(void)
 	uart_init();
 	init_printf(0, putc);
 
-	printf("kernel boots\r\n");	
+	printf("kernel boots\r\n");
 
 #ifdef USE_LFB // (optional) init output to the graphical console
-	lfb_init(); 
+	lfb_init();
 	lfb_showpicture();
 	lfb_print(0, 240, "kernel boots");
-#endif		
+#endif
 
 	int res = copy_process((unsigned long)&process, (unsigned long)"12345");
 	if (res != 0) {
 		printf("error while starting process 1");
 		return;
 	}
-	
+
 	res = copy_process((unsigned long)&process, (unsigned long)"abcde");
 	if (res != 0) {
 		printf("error while starting process 2");
@@ -71,5 +71,5 @@ void kernel_main(void)
 
 	while (1){
 		schedule();
-	}	
+	}
 }
