@@ -1,16 +1,16 @@
-# Using GDB to debug kernel 
+# Using GDB to debug kernel
 
-**NOTE**: 
+**NOTE**:
 
-1. Read the whole document before you attempt GDB. 
-2. *WSL users who want to develop on local machines instead of the server*: gdbserver may not play well with WSL. See "troubleshooting"  below. You are fine if you develop on the server. 
+1. Read the whole document before you attempt GDB.
+2. *WSL users who want to develop on local machines instead of the server*: gdbserver may not play well with WSL. See "troubleshooting"  below. You are fine if you develop on the server.
 
-## GDB Installation 
+## GDB Installation
 
-We've done this on the server already. Do this if developing on local machines (Linux or WSL). 
+We've done this on the server already. Do this if developing on local machines (Linux or WSL).
 
 ```
-sudo apt install gdb-multiarch gcc-aarch64-linux-gnu build-essential 
+sudo apt install gdb-multiarch gcc-aarch64-linux-gnu build-essential
 ```
 Note: the gdb for aarch64 is NOT called aarch64-XXXX-gdb.
 
@@ -28,7 +28,7 @@ qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -
 
 Explanation: -S not starting the guest until you tell it to from gdb.  -s listening for an incoming connection from gdb on TCP port 1234
 
-**WARNING** If multiple students run the first command on the server machine, they all attempt to listen on tcp port 1234. Only one will succeed. If you see such a failure, use the second form to specify a **different** TCP port number (not necessarily 5678 which may be in use as well). 
+**WARNING** If multiple students run the first command on the server machine, they all attempt to listen on tcp port 1234. Only one will succeed. If you see such a failure, use the second form to specify a **different** TCP port number (not necessarily 5678 which may be in use as well).
 
 ```
 xzl@granger1[~]$ netstat -tulpn|grep 5678
@@ -50,17 +50,17 @@ tcp6       0      0 :::1234                 :::*                    LISTEN      
 From another terminal
 
 ```
-gdb-multiarch build/kernel8.elf 
-(gdb) target remote :1234 
-(gdb) layout asm 
+gdb-multiarch build/kernel8.elf
+(gdb) target remote :1234
+(gdb) layout asm
 ```
 
 The port number (e.g. 1234) must match what you specified for QEMU.
 
-Single step 
+Single step
 
 ```
-(gdb) si 
+(gdb) si
 ```
 
 ![gdb-si](images/gdb-si.png)
@@ -68,13 +68,13 @@ Single step
 ### Dump register contents
 
 ```
-(gdb) info reg 
+(gdb) info reg
 ```
 
 ![gdb-reg](images/gdb-reg.png)
 
 
-show reg information at each step. This example shows 
+show reg information at each step. This example shows
 ```
 (gdb) display/10i $sp
 ```
@@ -83,7 +83,7 @@ show reg information at each step. This example shows
 
 ### Dump memory
 
-You can specify a symbol or a raw addr 
+You can specify a symbol or a raw addr
 
 ... as instructions
 
@@ -125,7 +125,7 @@ b *0xffff0000
 
 ### Function/source lookup
 
-Look up type of a given symbol 
+Look up type of a given symbol
 ```
 ptype mem_map
 ```
@@ -138,12 +138,12 @@ info line *0x10000000
 List source at a given addr
 ```
 list *0x10000000
-list *fn 
+list *fn
 ```
 
 ## The GDB "dashboard" enhancement
 
-The basic GDB UI is too primitive to beginners. We provide you an enhancement called GDB-dashboard. The upstream source is [here](https://github.com/fxlin/gdb-dashboard-aarch64). I adapted it for aarch64. Screenshot: 
+The basic GDB UI is too primitive to beginners. We provide you an enhancement called GDB-dashboard. The upstream source is [here](https://github.com/fxlin/gdb-dashboard-aarch64). I adapted it for aarch64. Screenshot:
 
 ![Screenshot](https://raw.githubusercontent.com/fxlin/gdb-dashboard-aarch64/master/gdb-dash-aarch64.png)
 
@@ -151,23 +151,23 @@ The basic GDB UI is too primitive to beginners. We provide you an enhancement ca
 
 ### Installation
 
-Grab from my repository: 
+Grab from my repository:
 
 ```
 wget -P ~ https://raw.githubusercontent.com/fxlin/gdb-dashboard-aarch64/master/.gdbinit
 ```
 
-There's only one file: `.gdbinit`. It's the initial script that GDB will load upon start. The above line download it to your home directory. 
+There's only one file: `.gdbinit`. It's the initial script that GDB will load upon start. The above line download it to your home directory.
 
 ### Usage
 
-*All GDB commands still apply*, e.g. "si" is single step per instruction; "b" is to set a breakpoint; "c" for continuing execution. See below for more. 
+*All GDB commands still apply*, e.g. "si" is single step per instruction; "b" is to set a breakpoint; "c" for continuing execution. See below for more.
 
-The major features here are multiple views: for registers, stack, assembly, and source. 
+The major features here are multiple views: for registers, stack, assembly, and source.
 
 #### Customize
 
-Open ~/.gdbinit. Go to near line 2500 where you can see initialization commands for GDB, e.g. 
+Open ~/.gdbinit. Go to near line 2500 where you can see initialization commands for GDB, e.g.
 
 ```
 file build/kernel8.elf
@@ -176,23 +176,23 @@ target remote :1234
 
 > The port number (e.g. 1234) must match what you specified for QEMU.
 
-GDB execute these commands whenever it starts, so you do not have to type them every time. 
+GDB execute these commands whenever it starts, so you do not have to type them every time.
 
-In the above example, GDB loads the ELF file kernel8.elf (only for parsing symbols and debugging info); it connects to a remote target at local port 1234. 
+In the above example, GDB loads the ELF file kernel8.elf (only for parsing symbols and debugging info); it connects to a remote target at local port 1234.
 
-Lines below customize gdb-dashboard behaviors, e.g. 
+Lines below customize gdb-dashboard behaviors, e.g.
 
 ```
 dashboard source -style height 15
 dashboard assembly -style height 8
 ```
 
-These lines set the height of the "source" panel and the "assembly" panel. 
+These lines set the height of the "source" panel and the "assembly" panel.
 
-The best documentation of gdb-dashboard seems from typing `help dashboard` in the GDB console. e.g. In GDB, type: 
+The best documentation of gdb-dashboard seems from typing `help dashboard` in the GDB console. e.g. In GDB, type:
 
 ```
->>> help dashboard expressions 
+>>> help dashboard expressions
 ```
 
 Cannot connect? See "troubleshooting" below.
@@ -200,13 +200,13 @@ Cannot connect? See "troubleshooting" below.
 ## Other enhancement (FYI)
 
 
-GEF (https://github.com/hugsy/gef) is also viable. Both GEF and GDB-dashboard: 
+GEF (https://github.com/hugsy/gef) is also viable. Both GEF and GDB-dashboard:
 
-* Both enhanced GDB significantly. 
+* Both enhanced GDB significantly.
 
-* GEF understands aarch64 semantics (e.g. CPU flags) very well. It can even tell why a branch was taken/not taken. However, GEF does not parse aarch64 callstack properly (at least I cannot get it work). 
+* GEF understands aarch64 semantics (e.g. CPU flags) very well. It can even tell why a branch was taken/not taken. However, GEF does not parse aarch64 callstack properly (at least I cannot get it work).
 
-* GDB-dashboard nicely parses the callstack. It, however, does not display aarch64 registers properly. 
+* GDB-dashboard nicely parses the callstack. It, however, does not display aarch64 registers properly.
 
 GEF screenshot (note the CPU flags it recognized)
 
@@ -220,32 +220,32 @@ GEF screenshot (note the CPU flags it recognized)
 
 * Your QEMU version. i.e. the output of "qemu-system-aarch64  --version"
 * Have you tried other kernel binaries, e.g. from p1exp1? And the binaries provided by us? https://github.com/fxlin/p1-kernel/releases
-* The full commands you use to launch QEMU. Have you tried different port numbers? 
-* Launch GDB w/o loading .gdbinit: 
+* The full commands you use to launch QEMU. Have you tried different port numbers?
+* Launch GDB w/o loading .gdbinit:
 
 ```
 gdb-multiarch -n
 ```
 
-Then enter GDB commands manually, e.g. load, target remote, etc. Does the problem persist? What's the output? 
+Then enter GDB commands manually, e.g. load, target remote, etc. Does the problem persist? What's the output?
 
-* Attach screenshot(s) of the above steps, if possible. 
+* Attach screenshot(s) of the above steps, if possible.
 
 **WSL caveat:**
 
-"gdbserver: Target description specified unknown architecture “aarch64” 
-https://stackoverflow.com/questions/53524546/gdbserver-target-description-specified-unknown-architecture-aarch64 
-It seems GDB server does not play well with WSL… be aware! 
+"gdbserver: Target description specified unknown architecture “aarch64”
+https://stackoverflow.com/questions/53524546/gdbserver-target-description-specified-unknown-architecture-aarch64
+It seems GDB server does not play well with WSL… be aware!
 
-## Reference 
+## Reference
 
-Launch qemu with gdb 
+Launch qemu with gdb
 
-https://en.wikibooks.org/wiki/QEMU/Debugging_with_QEMU#Launching_QEMU_from_GDB 
+https://en.wikibooks.org/wiki/QEMU/Debugging_with_QEMU#Launching_QEMU_from_GDB
 
-more info about gdb for kernel debugging 
+more info about gdb for kernel debugging
 
-https://wiki.osdev.org/Kernel_Debugging 
+https://wiki.osdev.org/Kernel_Debugging
 
 Good article
 

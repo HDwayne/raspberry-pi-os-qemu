@@ -6,9 +6,9 @@
 
 ![](figures/overview.png)
 
-We will build: a minimal, baremetal program that can print "Hello world" via Rpi3's UART. 
+We will build: a minimal, baremetal program that can print "Hello world" via Rpi3's UART.
 
-Students will experience: 
+Students will experience:
 
 1. The C project structure
 
@@ -22,29 +22,29 @@ Students will experience:
 
 ## Roadmap
 
-Create a Makefile project. Add minimum code to boot the platform. Initialize the UART hardware. Send characters to the UART registers. 
+Create a Makefile project. Add minimum code to boot the platform. Initialize the UART hardware. Send characters to the UART registers.
 
-## Terms 
+## Terms
 
-1. Strictly speaking, this baremetal program is not a "kernel". We nevertheless call it so for ease of explanation. 
+1. Strictly speaking, this baremetal program is not a "kernel". We nevertheless call it so for ease of explanation.
 
-2. "Raspberry Pi" means the actual Rpi3 hardware. "QEMU" means the Rpi3 platform as emulated by QEMU. We will explain details where the real hardware behaves differently from QEMU. 
+2. "Raspberry Pi" means the actual Rpi3 hardware. "QEMU" means the Rpi3 platform as emulated by QEMU. We will explain details where the real hardware behaves differently from QEMU.
 
 ## Project structure
 
-1. `Makefile`: We will use the GNU Makefile to build the kernel. 
+1. `Makefile`: We will use the GNU Makefile to build the kernel.
 1. `src`: This folder contains all of the source code.
-1. `include`: All of the header files are placed here. 
+1. `include`: All of the header files are placed here.
 
-Note: Of all the subsequent experiments in p1, the source code has the same structure. 
+Note: Of all the subsequent experiments in p1, the source code has the same structure.
 
 <!--- 1. **build.sh or build.bat** You'll need these files if you want to build the kernel using Docker. You won't need to have the make utility or the compiler toolchain installed on your laptop. --->
 
 ### Makefile walkthrough
 
-If you are not familiar with Makefiles, read [this](http://opensourceforu.com/2012/06/gnu-make-in-detail-for-beginners/) article. 
+If you are not familiar with Makefiles, read [this](http://opensourceforu.com/2012/06/gnu-make-in-detail-for-beginners/) article.
 
-The complete Makefile: 
+The complete Makefile:
 
 ```
 ARMGNU ?= aarch64-linux-gnu
@@ -58,7 +58,7 @@ SRC_DIR = src
 all : kernel8.img
 
 clean :
-    rm -rf $(BUILD_DIR) *.img 
+    rm -rf $(BUILD_DIR) *.img
 
 $(BUILD_DIR)/%_c.o: $(SRC_DIR)/%.c
     mkdir -p $(@D)
@@ -83,23 +83,23 @@ Let's inspect this file in detail:
 ```
 ARMGNU ?= aarch64-linux-gnu
 ```
-The Makefile starts with a variable definition. `ARMGNU` is a cross-compiler prefix. We need to use a [cross-compiler](https://en.wikipedia.org/wiki/Cross_compiler) because we are compiling the source code for the `arm64` architecture on an `x86` machine. So instead of `gcc`, we will use `aarch64-linux-gnu-gcc`. 
+The Makefile starts with a variable definition. `ARMGNU` is a cross-compiler prefix. We need to use a [cross-compiler](https://en.wikipedia.org/wiki/Cross_compiler) because we are compiling the source code for the `arm64` architecture on an `x86` machine. So instead of `gcc`, we will use `aarch64-linux-gnu-gcc`.
 
 ```
 COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only
-ASMOPS = -Iinclude 
+ASMOPS = -Iinclude
 ```
 
 `COPS` and `ASMOPS` are options that we pass to the compiler when compiling C and assembler code, respectively. These options require a short explanation:
 
-* **-Wall** Show all warnings. A good practice. 
+* **-Wall** Show all warnings. A good practice.
 * **-nostdlib** Don't use the C standard library. Most of the calls in the C standard library eventually interact with the operating system. We are writing a bare-metal program, and we don't have any underlying operating system, so the C standard library is not going to work for us anyway.
 * **-nostartfiles** Don't use standard startup files. Startup files are responsible for setting an initial stack pointer, initializing static data, and jumping to the main entry point. We are going to do all of this by ourselves.
 * **-ffreestanding** A freestanding environment is an environment in which the standard library may not exist, and program startup may not necessarily be at main. The option `-ffreestanding` directs the compiler to not assume that standard functions have their usual definition.
 * **-Iinclude** Search for header files in the `include` folder.
 * **-mgeneral-regs-only**. Use only general-purpose registers. ARM processors also have [NEON](https://developer.arm.com/technologies/neon) registers. We don't want the compiler to use them because they add additional complexity (since, for example, we will need to store the registers during a context switch).
-* **-g** Include debugging info in the resultant ELF binary. 
-* **-O0** Turn off any compiler optimization. For ease of debugging. 
+* **-g** Include debugging info in the resultant ELF binary.
+* **-O0** Turn off any compiler optimization. For ease of debugging.
 
 ```
 BUILD_DIR = build
@@ -112,12 +112,12 @@ SRC_DIR = src
 all : kernel8.img
 
 clean :
-    rm -rf $(BUILD_DIR) *.img 
+    rm -rf $(BUILD_DIR) *.img
 ```
 
 ### Build targets & rules
 
-The first two targets are pretty simple: the `all` target is the default one, and it is executed whenever you type `make` without any arguments (`make` always uses the first target as the default). This target just redirects all work to a different target, `kernel8.img`. 
+The first two targets are pretty simple: the `all` target is the default one, and it is executed whenever you type `make` without any arguments (`make` always uses the first target as the default). This target just redirects all work to a different target, `kernel8.img`.
 
 > The name "kernel8.img" is mandated by the Rpi3 firmware. The trailing `8` denotes ARMv8 which is a 64-bit architecture. This filename tells the firmware to boot the processor into 64-bit mode.
 
@@ -148,7 +148,7 @@ DEP_FILES = $(OBJ_FILES:%.o=%.d)
 -include $(DEP_FILES)
 ```
 
-The next two lines are a little bit tricky. If you take a look at how we defined our compilation targets for both C and assembler source files, you will notice that we used the `-MMD` parameter. This parameter instructs the `gcc` compiler to create a dependency file for each generated object file. A dependency file defines all of the dependencies for a particular source file. These dependencies usually contain a list of all included headers. We need to include all of the generated dependency files so that make knows what exactly to recompile in case a header changes. 
+The next two lines are a little bit tricky. If you take a look at how we defined our compilation targets for both C and assembler source files, you will notice that we used the `-MMD` parameter. This parameter instructs the `gcc` compiler to create a dependency file for each generated object file. A dependency file defines all of the dependencies for a particular source file. These dependencies usually contain a list of all included headers. We need to include all of the generated dependency files so that make knows what exactly to recompile in case a header changes.
 
 ### Bake the kernel binaries :cookie:
 
@@ -166,14 +166,14 @@ $(ARMGNU)-objcopy kernel8.elf -O binary kernel8.img
 
 **kernel8.elf & kernel8.img**
 
-* **build/kernel8.elf ("kernel binary"):** Our build outcome as an ELF file. It contains all code, data, and debugging info. Often, to execute an ELF program in user space, there should be a loader to parse ELF, load code & data to designated memory locations, etc. For our kernel experiment, we do NOT have such a loader for the kernel itself. 
-* **kernel8.img ("kernel image"):** The raw instructions & data as extracted from kernel8.elf. The raw image is to be loaded to memory. Since it's a memory dump (see below), the load is as simple as byte-by-byte copy. 
+* **build/kernel8.elf ("kernel binary"):** Our build outcome as an ELF file. It contains all code, data, and debugging info. Often, to execute an ELF program in user space, there should be a loader to parse ELF, load code & data to designated memory locations, etc. For our kernel experiment, we do NOT have such a loader for the kernel itself.
+* **kernel8.img ("kernel image"):** The raw instructions & data as extracted from kernel8.elf. The raw image is to be loaded to memory. Since it's a memory dump (see below), the load is as simple as byte-by-byte copy.
 
-> The kernel image is produced by `objcopy`. Its manual says: 
+> The kernel image is produced by `objcopy`. Its manual says:
 >
 > "`objcopy` can be used to generate a raw binary file by using an output target of ‘binary’ (e.g., use -O binary). When `objcopy` generates a raw binary file, it will essentially produce a memory dump of the contents of the input object file. All symbols and relocation information will be discarded. The memory dump will start at the load address of the lowest section copied into the output file."
 >
-> Q: can you use `readelf` to examine kernel8.elf, and explain your observation? 
+> Q: can you use `readelf` to examine kernel8.elf, and explain your observation?
 
 <!----- **Note: the following only applies to Rpi3 hardware. QEMU, which does not implement Rpi3's firmware, does not know config.txt.** You can also boot the CPU in the 64-bit mode by using `arm_control=0x200` flag in the `config.txt` file. The RPi OS previously used this method, and you can still find it in some of the exercise answers. However, `arm_control` flag is undocumented and it is preferable to use `kernel8.img` naming convention instead. --->
 
@@ -190,16 +190,16 @@ SECTIONS
     .data : { *(.data) }
     . = ALIGN(0x8);
     bss_begin = .;
-    .bss : { *(.bss*) } 
+    .bss : { *(.bss*) }
     bss_end = .;
 }
 ```
 
-After startup, the Rpi3 GPU loads `kernel8.img` into memory 0x0 and starts execution from the beginning of the file. That's why the `.text.boot` section must come first; we are going to put the kernel startup code inside this section. QEMU behaves differently: it loads the kernel image at 0x80000. 
+After startup, the Rpi3 GPU loads `kernel8.img` into memory 0x0 and starts execution from the beginning of the file. That's why the `.text.boot` section must come first; we are going to put the kernel startup code inside this section. QEMU behaves differently: it loads the kernel image at 0x80000.
 
 >  Q: How to tweak the linker script to update the start address?
 
-The `.text`, `.rodata`, and `.data` sections contain kernel instructions, read-only data, and global data with init values. The `.bss` section contains data that should be initialized to 0. By putting such data in a separate section, the compiler can save some space in the ELF binary––only the section size is stored in the ELF header, but the section content is omitted. 
+The `.text`, `.rodata`, and `.data` sections contain kernel instructions, read-only data, and global data with init values. The `.bss` section contains data that should be initialized to 0. By putting such data in a separate section, the compiler can save some space in the ELF binary––only the section size is stored in the ELF header, but the section content is omitted.
 
 After booting up, our kernel initializes the `.bss` section to 0; that's why we need to record the start and end of the section (hence the `bss_begin` and `bss_end` symbols) and align the section so that it starts at an address that is a multiple of 8. This eases kernel programming because the `str` instruction can be used only with 8-byte-aligned addresses.
 
@@ -216,12 +216,12 @@ boot.S contains the kernel startup code (VSCode: Ctrl-p then type boot.S):
 
 .globl _start
 _start:
-    mrs    x0, mpidr_el1        
+    mrs    x0, mpidr_el1
     and    x0, x0,#0xFF        // Check processor id
     cbz    x0, master        // Hang for all non-primary CPU
     b    proc_hang
 
-proc_hang: 
+proc_hang:
     b proc_hang
 
 master:
@@ -241,15 +241,15 @@ First, we specify that everything defined in `boot.S` should go in the `.text.bo
 ```
 .globl _start
 _start:
-    mrs    x0, mpidr_el1        
+    mrs    x0, mpidr_el1
     and    x0, x0,#0xFF        // Check processor id
     cbz    x0, master        // Hang for all non-primary CPU
     b    proc_hang
 ```
 
-Rpi3 has 4 cores, and after the device is powered on, each core begins to execute the same code. Our kernel only works with the first one and put all of the other cores in an endless loop. This is exactly what the `_start` function is responsible for. It gets the processor ID from the [mpidr_el1](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0500g/BABHBJCI.html) system register. 
+Rpi3 has 4 cores, and after the device is powered on, each core begins to execute the same code. Our kernel only works with the first one and put all of the other cores in an endless loop. This is exactly what the `_start` function is responsible for. It gets the processor ID from the [mpidr_el1](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0500g/BABHBJCI.html) system register.
 
-> Q: It may make more sense to put core 1-3 in deep sleep using ``wfi``. How? 
+> Q: It may make more sense to put core 1-3 in deep sleep using ``wfi``. How?
 
 ### Kernel memory layout
 
@@ -271,9 +271,9 @@ Here, we clean the `.bss` section by calling `memzero`. We will define this func
 ```
 ![](figures/mem-0.png)
 
-After cleaning the `.bss` section, the kernel initializes the stack pointer and passes execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. As our kernel's stack won't grow very large and the image itself is tiny, 4MB is more than enough for us. 
+After cleaning the `.bss` section, the kernel initializes the stack pointer and passes execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. As our kernel's stack won't grow very large and the image itself is tiny, 4MB is more than enough for us.
 
-**Aside: Some ARM64 instructions used** 
+**Aside: Some ARM64 instructions used**
 
 For those of you who are not familiar with ARM assembler syntax, let me quickly summarize the instructions that we have used:
 
@@ -286,7 +286,7 @@ For those of you who are not familiar with ARM assembler syntax, let me quickly 
 * [**bl**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289865686.htm) "Branch with a link": perform an unconditional branch and store the return address in x30 (the link register). When the subroutine is finished, use the `ret` instruction to jump back to the return address.
 * [**mov**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289878994.htm) Move a value between registers or from a constant to a register.
 
-Our [cheat sheet](../cheatsheet.md) summarizes common ARM64 instructions. 
+Our [cheat sheet](../cheatsheet.md) summarizes common ARM64 instructions.
 
 For official documentation, [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/index.html) is the ARMv8-A developer's guide. It's a good resource if the ARM ISA is unfamiliar to you. [This page](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/ch09s01s01.html) specifically outlines the register usage convention in the ABI.
 
@@ -310,38 +310,38 @@ void kernel_main(void)
 This function is one of the simplest in the kernel. It works with the `Mini UART` device to print to screen and read user input. The kernel just prints `Hello, world!` and then enters an infinite loop that reads characters from the user and sends them back to the screen.
 
 ## A bit about the Rpi3 hardware
-The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. 
+The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks.
 
-Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
+Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc.
 
-> Rpi4 seems more friendly to kernel hackers. 
+> Rpi4 seems more friendly to kernel hackers.
 
 ### Memory-mapped IO
-On ARM-based SoCs, access to all devices is performed via memory-mapped registers. The Rpi3 SoC reserves physical memory address `0x3F000000` for IO devices. To configure a particular device, software reads/writes device registers. A device register is just a 32-bit region of memory. The meaning of each bit in each IO register is described in the SoC manual. 
+On ARM-based SoCs, access to all devices is performed via memory-mapped registers. The Rpi3 SoC reserves physical memory address `0x3F000000` for IO devices. To configure a particular device, software reads/writes device registers. A device register is just a 32-bit region of memory. The meaning of each bit in each IO register is described in the SoC manual.
 
 <!---- Take a look at section 1.2.3 ARM physical addresses in the SoC manual and the surrounding documentation for more context on why we use `0x3F000000` as a base address (even though `0x7E000000` is used throughout the manual). ---->
 
-> The term "device" is heavily overloaded in many tech docs. Sometimes it means a board, e.g. "an Rpi3 device"; sometimes it means an IO peripheral, e.g. "UART device". We will be explicit. 
+> The term "device" is heavily overloaded in many tech docs. Sometimes it means a board, e.g. "an Rpi3 device"; sometimes it means an IO peripheral, e.g. "UART device". We will be explicit.
 
 ### UART
 UART is a simple character device allowing software to send out text characters to a different machine. If you do not care about performance, UART requires very minimum software code. Therefore, it is often the first few IO devices to bring up when we build system software for a new machine. Only with UART meaning debugging is possible. (JTAG is another option which however requires more complex setup).
 
-In the simplest form, software writes ascii values to UART registers. The UART device converts written values to a sequence of high and low voltages on wire. This sequence is transmitted to your via the `TTL-to-serial cable` and is interpreted by your terminal emulator (e.g. PuTTY on Windows). 
+In the simplest form, software writes ascii values to UART registers. The UART device converts written values to a sequence of high and low voltages on wire. This sequence is transmitted to your via the `TTL-to-serial cable` and is interpreted by your terminal emulator (e.g. PuTTY on Windows).
 
-Rpi3 has the two UART devices. Oddly enough, they are different. 
+Rpi3 has the two UART devices. Oddly enough, they are different.
 
 | Name  | Type      | Comments                                   |
 | :---- | :-------- | ------------------------------------------ |
 | UART0 | PL011     | Secondary, intended as Bluetooth connector |
 | UART1 | mini UART | Primary, intended as debug console         |
 
-UART1/Mini UART: easier to program; limited performance/functionalities. That's fine for our goal. For specification of the Mini UART registers: see page 8 of the SoC manual. 
+UART1/Mini UART: easier to program; limited performance/functionalities. That's fine for our goal. For specification of the Mini UART registers: see page 8 of the SoC manual.
 
-UART0/PL011: richer functions; higher speed. Yet one needs to configure the board clock by talking to the GPU firmware. We won't do that. see [Example code](https://github.com/bztsrc/raspi3-tutorial/tree/master/05_uart0) if you are interested. 
+UART0/PL011: richer functions; higher speed. Yet one needs to configure the board clock by talking to the GPU firmware. We won't do that. see [Example code](https://github.com/bztsrc/raspi3-tutorial/tree/master/05_uart0) if you are interested.
 
-**Both UARTs can be mapped to the same physical pins** by setting the GPFSEL1 register. See the GPIO function diagram below. 
+**Both UARTs can be mapped to the same physical pins** by setting the GPFSEL1 register. See the GPIO function diagram below.
 
-That's enough to know about Rpi UARTs. More:  [official web page](https://www.raspberrypi.org/documentation/configuration/uart.md). 
+That's enough to know about Rpi UARTs. More:  [official web page](https://www.raspberrypi.org/documentation/configuration/uart.md).
 
 ### GPIO
 
@@ -349,7 +349,7 @@ Another IO device is GPIO [General-purpose input/output](https://en.wikipedia.or
 
 ![](../images/gpio-pins.jpg)
 
-An SoC often has limited number of pins. Software can control the use of these pins, e.g. for GPIO or for UART. Software does so by writing to specific memory-mapped registers. 
+An SoC often has limited number of pins. Software can control the use of these pins, e.g. for GPIO or for UART. Software does so by writing to specific memory-mapped registers.
 
 The GPIO can be used to configure the behavior of different GPIO pins. For example, to be able to use the Mini UART, we need to activate pins 14 and 15 and set them up to use this device. The image below illustrates how numbers are assigned to the GPIO pins:
 
@@ -357,11 +357,11 @@ The GPIO can be used to configure the behavior of different GPIO pins. For examp
 
 ## Walkthrough: the UART code
 
-The following init code configures pin 14 & 15 as UART in/out, sets up UART clock and its modes, etc. 
+The following init code configures pin 14 & 15 as UART in/out, sets up UART clock and its modes, etc.
 
 > Much of the UART init code is irrelevant to QEMU. Since QEMU "emulates" the UARTs, it can dump whatever our kernel writes to the emulated UART registers to stdio. Example: ``qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio``
 >
-> The first -serial means UART0 which we do not touch; the second -serial means we direct UART1 to stdio. 
+> The first -serial means UART0 which we do not touch; the second -serial means we direct UART1 to stdio.
 
 ```
 void uart_init ( void )
@@ -394,9 +394,9 @@ void uart_init ( void )
 
 Here, we use the two functions `put32` and `get32`. Those functions are very simple -- read and write some data to and from a 32-bit register. You can take a look at how they are implemented in [utils.S](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/utils.S). `uart_init` is one of the most complex and important functions in this lesson, and we will continue to examine it in the next three sections.
 
-### Init: GPIO alternative function selection 
+### Init: GPIO alternative function selection
 
-First, we need to activate the GPIO pins. Most of the pins can be used with different IO devices. So before using a particular pin, we need to select the pin's alternative function,  a number from 0 to 5 that can be set for each pin and configures which IO device is virtually "connected" to the pin. 
+First, we need to activate the GPIO pins. Most of the pins can be used with different IO devices. So before using a particular pin, we need to select the pin's alternative function,  a number from 0 to 5 that can be set for each pin and configures which IO device is virtually "connected" to the pin.
 
 See the list of all available GPIO alternative functions in the image below (taken from page 102 of the SoC manual)
 
@@ -423,7 +423,7 @@ Init: GPIO pull-up/down & how we disable it
 
 When working with GPIO pins, you will often encounter terms such as pull-up/pull-down. These concepts are explained in great detail in [this](https://grantwinney.com/using-pullup-and-pulldown-resistors-on-the-raspberry-pi/) article. For those who are too lazy to read the whole article, I will briefly explain the pull-up/pull-down concept.
 
-If you use a particular pin as input and don't connect anything to this pin, you will not be able to identify whether the value of the pin is 1 or 0. In fact, the device will report random values. The pull-up/pull-down mechanism allows you to overcome this issue. If you set the pin to the pull-up state and nothing is connected to it, it will report `1` all the time (for the pull-down state, the value will always be 0). In our case, we need neither the pull-up nor the pull-down state, because both the 14 and 15 pins are going to be connected all the time. 
+If you use a particular pin as input and don't connect anything to this pin, you will not be able to identify whether the value of the pin is 1 or 0. In fact, the device will report random values. The pull-up/pull-down mechanism allows you to overcome this issue. If you set the pin to the pull-up state and nothing is connected to it, it will report `1` all the time (for the pull-down state, the value will always be 0). In our case, we need neither the pull-up nor the pull-down state, because both the 14 and 15 pins are going to be connected all the time.
 
 **The pin state is preserved even after a reboot, so before using any pin, we always have to initialize its state.** There are three available states: pull-up, pull-down, and neither (to remove the current pull-up or pull-down state), and we need the third one.
 
@@ -457,7 +457,7 @@ retain their previous state.
 
 ### Init: Mini UART
 
-Now our Mini UART is connected to the GPIO pins, and the pins are configured. The rest of the `uart_init` function is dedicated to Mini UART initialization. 
+Now our Mini UART is connected to the GPIO pins, and the pins are configured. The rest of the `uart_init` function is dedicated to Mini UART initialization.
 
 ```
     put32(AUX_ENABLES,1);                   //Enable mini uart (this also enables access to its registers)
@@ -469,7 +469,7 @@ Now our Mini UART is connected to the GPIO pins, and the pins are configured. Th
 
     put32(AUX_MU_CNTL_REG,3);               //Finally, enable transmitter and receiver
 ```
-Let's examine this code snippet line by line. 
+Let's examine this code snippet line by line.
 
 ```
     put32(AUX_ENABLES,1);                   //Enable mini uart (this also enables access to its registers)
@@ -495,7 +495,7 @@ It is possible to configure the Mini UART to generate a processor interrupt each
 ```
     put32(AUX_MU_LCR_REG,3);                //Enable 8 bit mode
 ```
-Mini UART can support either 7- or 8-bit operations. This is because an ASCII character is 7 bits for the standard set and 8 bits for the extended. We are going to use 8-bit mode. 
+Mini UART can support either 7- or 8-bit operations. This is because an ASCII character is 7 bits for the standard set and 8 bits for the extended. We are going to use 8-bit mode.
 
 -------------------
 
@@ -509,16 +509,16 @@ The RTS line is used in the flow control and we don't need it. Set it to be high
 ```
     put32(AUX_MU_BAUD_REG,270);             //Set baud rate to 115200
 ```
-The baud rate is the rate at which information is transferred in a communication channel. “115200 baud” means that the serial port is capable of transferring a maximum of 115200 bits per second. The baud rate of your Raspberry Pi mini UART device should be the same as the baud rate in your terminal emulator. 
+The baud rate is the rate at which information is transferred in a communication channel. “115200 baud” means that the serial port is capable of transferring a maximum of 115200 bits per second. The baud rate of your Raspberry Pi mini UART device should be the same as the baud rate in your terminal emulator.
 
 The Mini UART calculates baud rate according to the following equation:
 
 ```
-baudrate = system_clock_freq / (8 * ( baudrate_reg + 1 )) 
+baudrate = system_clock_freq / (8 * ( baudrate_reg + 1 ))
 ```
 The `system_clock_freq` is 250 MHz, so we can easily calculate the value of `baudrate_reg` as 270.
 
-``` 
+```
     put32(AUX_MU_CNTL_REG,3);               //Finally, enable transmitter and receiver
 ```
 After this line is executed, the Mini UART is ready for work!
@@ -531,7 +531,7 @@ After the Mini UART is ready, we can try to use it to send and receive some data
 void uart_send ( char c )
 {
     while(1) {
-        if(get32(AUX_MU_LSR_REG)&0x20) 
+        if(get32(AUX_MU_LSR_REG)&0x20)
             break;
     }
     put32(AUX_MU_IO_REG,c);
@@ -540,7 +540,7 @@ void uart_send ( char c )
 char uart_recv ( void )
 {
     while(1) {
-        if(get32(AUX_MU_LSR_REG)&0x01) 
+        if(get32(AUX_MU_LSR_REG)&0x01)
             break;
     }
     return(get32(AUX_MU_IO_REG)&0xFF);
@@ -563,16 +563,16 @@ void uart_send_string(char* str)
     }
 }
 ```
-This function just iterates over all characters in a string and sends them one by one. 
+This function just iterates over all characters in a string and sends them one by one.
 
-**Low efficiency?** Apparently Tx/Rx with busy wait burn lots of CPU cycles for no good. It's fine for our baremetal program -- simple & less error-prone. Production software often do interrupt-driven Rx/Tx. 
+**Low efficiency?** Apparently Tx/Rx with busy wait burn lots of CPU cycles for no good. It's fine for our baremetal program -- simple & less error-prone. Production software often do interrupt-driven Rx/Tx.
 
 
 ## Take the kernel for a spin
 
 ### Rpi3
 
-Run `make` to build the kernel. 
+Run `make` to build the kernel.
 
 The Raspberry Pi startup sequence is the following (simplified):
 
@@ -596,9 +596,9 @@ disable_commandline_tags=1
 
 **Run**
 
-1. Copy the generated `kernel8.img` file to the `boot` partition of your Raspberry Pi flash card and delete `kernel7.img` as well as any other `kernel*.img` files on your SD card. Make sure you left all other files in the boot partition untouched (see [43](https://github.com/s-matyukevich/raspberry-pi-os/issues/43) and [158](https://github.com/s-matyukevich/raspberry-pi-os/issues/158) issues for details). 
+1. Copy the generated `kernel8.img` file to the `boot` partition of your Raspberry Pi flash card and delete `kernel7.img` as well as any other `kernel*.img` files on your SD card. Make sure you left all other files in the boot partition untouched (see [43](https://github.com/s-matyukevich/raspberry-pi-os/issues/43) and [158](https://github.com/s-matyukevich/raspberry-pi-os/issues/158) issues for details).
 
-   **Update** (2/10/21): students reported that UART1 stops to work with the newest Rpi3 firmware (either extracted from Raspbian OS or from the upstream github repo). The symptom: no "helloworld" is printed, while UART1 seems echoing fine. UART0 seems unaffected. My guess: it has something to do with the firmware's new device tree feature? **Action:** use older firmware provided by us: https://github.com/fxlin/p1-kernel/releases/tag/exp1-rpi3. 
+   **Update** (2/10/21): students reported that UART1 stops to work with the newest Rpi3 firmware (either extracted from Raspbian OS or from the upstream github repo). The symptom: no "helloworld" is printed, while UART1 seems echoing fine. UART0 seems unaffected. My guess: it has something to do with the firmware's new device tree feature? **Action:** use older firmware provided by us: https://github.com/fxlin/p1-kernel/releases/tag/exp1-rpi3.
 
 1. Modify the `config.txt` file as described above.
 
@@ -616,22 +616,22 @@ The steps above assume that you have Raspbian installed on your SD card. It is a
     * Use an MBR partition table
     * Format the boot partition as FAT32
     > The card should be formatted exactly in the same way as it is required to install Raspbian. Check `HOW TO FORMAT AN SD CARD AS FAT` section in the [official documenation](https://www.raspberrypi.org/documentation/installation/noobs.md) for more information.
-    
+
 1. Copy the following files to the card:
-   
-    * [bootcode.bin](https://github.com/raspberrypi/firmware/blob/master/boot/bootcode.bin) This is the GPU bootloader, it contains the GPU code to start the GPU and load the GPU firmware. 
-    
+
+    * [bootcode.bin](https://github.com/raspberrypi/firmware/blob/master/boot/bootcode.bin) This is the GPU bootloader, it contains the GPU code to start the GPU and load the GPU firmware.
+
     * [start.elf](https://github.com/raspberrypi/firmware/blob/master/boot/start.elf) This is the GPU firmware. It reads `config.txt` and enables the GPU to load and run ARM specific user code from `kernel8.img`
-    
-      **Update** (2/10/21): UART1 is broken by these upstream firmware for unknown reason. Use older firmware provided by us: https://github.com/fxlin/p1-kernel/releases/tag/exp1-rpi3. 
-    
-1. Copy `kernel8.img` and `config.txt` files. 
+
+      **Update** (2/10/21): UART1 is broken by these upstream firmware for unknown reason. Use older firmware provided by us: https://github.com/fxlin/p1-kernel/releases/tag/exp1-rpi3.
+
+1. Copy `kernel8.img` and `config.txt` files.
 
 1. Connect the USB-to-TTL serial cable.
 
 1. Power on your Raspberry Pi.
 
-1. Use your terminal emulator to connect to the RPi OS. 
+1. Use your terminal emulator to connect to the RPi OS.
 
 Unfortunately, all Raspberry Pi firmware files are closed-sourced and undocumented. For more information about the Raspberry Pi startup sequence, you can refer to some unofficial sources, like [this](https://raspberrypi.stackexchange.com/questions/10442/what-is-the-boot-sequence) StackExchange question or [this](https://github.com/DieterReuter/workshop-raspberrypi-64bit-os/blob/master/part1-bootloader.md) Github repository.
 
@@ -641,7 +641,7 @@ Unfortunately, all Raspberry Pi firmware files are closed-sourced and undocument
 
 Follow the instructions in [Prerequisites](../lesson00/rpi-os.md).
 
-Type `make -f Makefile.qemu` . 
+Type `make -f Makefile.qemu` .
 
 **Run**
 

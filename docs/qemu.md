@@ -27,14 +27,14 @@ Note the output path is just an example from my machine.
 ```
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio
 
-# if you want to suppress graphics ... 
+# if you want to suppress graphics ...
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -nographic
 ```
-Explanation: 
+Explanation:
 * -M machine type
-* Two "-serial" options correspond to the two UARTs of Rpi3 as emulated by QEMU. **Note:** Our kernel writes message to the 2nd one. So we tell QEMU to redirect the 2nd UART to stdio. 
+* Two "-serial" options correspond to the two UARTs of Rpi3 as emulated by QEMU. **Note:** Our kernel writes message to the 2nd one. So we tell QEMU to redirect the 2nd UART to stdio.
 
-## Launch the kernel, for GDB debugging 
+## Launch the kernel, for GDB debugging
 
 ```
 # will wait for gdb to connect at local tcp 1234
@@ -43,22 +43,22 @@ qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -
 # will wait for gdb to connect at local tcp 5678
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -gdb tcp::5678 -S
 ```
-Explanation: -S not starting the guest until you tell it to from gdb. 
+Explanation: -S not starting the guest until you tell it to from gdb.
 -s listening for an incoming connection from gdb on TCP port 1234
 
-The second form is useful in that if multiple students attempt to listen on tcp port 1234 on the same machine, all but one will fail. See [](g*Donna Chen*db.md) for details. 
+The second form is useful in that if multiple students attempt to listen on tcp port 1234 on the same machine, all but one will fail. See [](g*Donna Chen*db.md) for details.
 
-## Launch the kernel with monitor 
+## Launch the kernel with monitor
 ```
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -monitor stdio
 # multiplex both board serial and monitor output on stdio
 qemu-system-aarch64 -machine raspi3 -serial null -serial mon:stdio -kernel kernel8.img
 ```
-More on [the monitor mode](https://en.wikibooks.org/wiki/QEMU/Monitor). 
+More on [the monitor mode](https://en.wikibooks.org/wiki/QEMU/Monitor).
 
-## Launch the kernel with tracing 
+## Launch the kernel with tracing
 ```
-qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D qemu.log 
+qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D qemu.log
 ```
 Explanation: -d int ---> enable interrupt dedug       -D test.log  ----> put debug msg to a file "qemu.log"
 
@@ -92,7 +92,7 @@ Taking exception 5 [IRQ]
 Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
 ```
 
-Explanation: ESR - exception syndrome register, encoding the cause of the exception. ELR - exception link register, containing the return address of the exception handler. PSTATE - CPU flags when the exception is taken 
+Explanation: ESR - exception syndrome register, encoding the cause of the exception. ELR - exception link register, containing the return address of the exception handler. PSTATE - CPU flags when the exception is taken
 
 ## Putting everything in one file (env-qemu.sh)
 
@@ -117,7 +117,7 @@ run-debug() {
 }
 
 run-log() {
-	qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D qemu.log 
+	qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D qemu.log
 }
 ```
 

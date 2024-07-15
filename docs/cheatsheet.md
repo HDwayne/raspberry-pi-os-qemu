@@ -4,8 +4,8 @@
 
 ![image-20210130093920438](image-20210130093920438.png)
 
-* x0 - x30: 64-bit general purpose registers, where: 
-  
+* x0 - x30: 64-bit general purpose registers, where:
+
   *  x0-x18. callee can corrupt
      *  x0-x7  Arguments and  return values.  additional arguments are on the stack
      * x8: Indirect result. For syscalls, the syscall number is in r8
@@ -13,12 +13,12 @@
      *  x9-x28: caller-saved registers. In general okay to use in your code
   * x29 (FP): frame pointer, pointing to the base of the current stack frame
   * x30 (LR): link register
-* SP      Stack pointer                      
-* PC     Program counter                     
+* SP      Stack pointer
+* PC     Program counter
 
-Our [GDB customization](gdb.md) color-codes the registers. 
+Our [GDB customization](gdb.md) color-codes the registers.
 
-White highlight (x0-x7): parameter/results; red background (x19-x29): callee saved. 
+White highlight (x0-x7): parameter/results; red background (x19-x29): callee saved.
 
 (Green reg values: the values have changed since the last instruction)
 
@@ -130,10 +130,10 @@ See "Fundamentals of ARMv8-A", Chapter "Processor state"
 
 ## Common instructions
 
-[A more detailed instruction quick reference](../../arm64.pdf) 
+[A more detailed instruction quick reference](../../arm64.pdf)
 
 * mrs	Load value from a system register to one of the general purpose registers (x0–x30)
-* and	Perform the logical AND operation. 
+* and	Perform the logical AND operation.
 * cbz	Compare the result of the previously executed operation to 0 and jump (or `branch` in ARM terminology) to the provided label if the comparison yields true.
 * b		Perform an unconditional branch to some label.
 * adr	Load a label's relative address into the target register. In this case, we want pointers to the start and end of the `.bss` region.
@@ -173,7 +173,7 @@ The GNU toolchain however elected the official "aarch64" name for the port, so t
 
 ## References
 
-This page incorporates many contents from various sources. 
+This page incorporates many contents from various sources.
 
 * "arm64 assembly crash course", https://github.com/Siguza/ios-resources/blob/master/bits/arm64.md
 * https://linux-sunxi.org/Arm64#ARM64_cheat_sheet
@@ -181,5 +181,5 @@ This page incorporates many contents from various sources.
 * https://tc.gts3.org/cs3210/2020/spring/r/AArch64-ISA-Cheat-Sheet.pdf
 * "ARMv8 A64 Quick Reference", https://github.com/flynd/asmsheets
 
-  
+
 

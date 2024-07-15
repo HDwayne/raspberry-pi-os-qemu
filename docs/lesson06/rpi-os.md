@@ -2,10 +2,10 @@
 
 ## Objectives
 
-Make our tiny kernel capable of: 
+Make our tiny kernel capable of:
 
-1. enforcing separate virtual address spaces, and 
-2. user-level demand paging. 
+1. enforcing separate virtual address spaces, and
+2. user-level demand paging.
 
 <!--- todo: show a gif screenshot --->
 
@@ -15,13 +15,13 @@ Make our tiny kernel capable of:
 
 Prior to this experiment, our kernel can run and schedule user processes, but the isolation between them is not complete - all processes and the kernel itself share the same memory. This allows any process to easily access somebody else's data and even kernel data. And even if we assume that all our processes are not malicious, there is another drawback: before allocating memory each process need to know which memory regions are already occupied - this makes memory allocation for a process more complicated.
 
-We take the following steps. 
+We take the following steps.
 
-* Set up a pgtable for kernel. Using linear mapping. 
-* Turn on MMU shortly after kernel boots. This is a common kernel design. 
+* Set up a pgtable for kernel. Using linear mapping.
+* Turn on MMU shortly after kernel boots. This is a common kernel design.
 * Set up pgtables for user processes
 * Implement fork() for user processes
-* Implement demand paging 
+* Implement demand paging
 
 ## Background: ARM64 translation process
 
@@ -29,9 +29,9 @@ The Arm's document is well written. ("Armv8-A Address Translation", [link](https
 
 ### Page table format
 
-This experiment introduces VM to our kernel. With VM, we can formally call tasks "processes". Each task will have its own address space. They issue memory access with virtual addresses. The MMU transparently translates virtual addresses to physical addresses. The MMU uses page table (or pgtable, or "translation table" in ARM's manual). 
+This experiment introduces VM to our kernel. With VM, we can formally call tasks "processes". Each task will have its own address space. They issue memory access with virtual addresses. The MMU transparently translates virtual addresses to physical addresses. The MMU uses page table (or pgtable, or "translation table" in ARM's manual).
 
-The following diagram summarizes ARM64 address translation with uses 4-level pgtables. 
+The following diagram summarizes ARM64 address translation with uses 4-level pgtables.
 
 ```
                            Virtual address                                                                 Physical Memory
@@ -56,22 +56,22 @@ The following diagram summarizes ARM64 address translation with uses 4-level pgt
                                                                                +--------------+          +------------------+
 ```
 
-Notable points: 
+Notable points:
 
 * Page tables have a hierarchical structure, i.e. a tree.  An item in any of the tables contains an address of the next table in the hierarchy.
-  
-  > Note: strictly speaking a pgtable means a contiguous array of entries at any of the four levels. So a tree has many pgtables. Some documents casually use "pgtable" to refer to an entire pgtable tree. Be careful. 
-  
-* There are 4 levels in the table hierarchy: PGD (Page Global Directory), PUD (Page Upper Directory), PMD (Page Middle Directory), PTE (Page Table Entry). PTE is the last table in the hierarchy and it points to the actual page in the physical memory. 
 
-  > Don't read too much into the terms, which just represent lv1, 2, ... pgtables. Them terms come from the Linux kernel (x86), not ARM64. Over years, they became a common lingo among kernel hackers. 
+  > Note: strictly speaking a pgtable means a contiguous array of entries at any of the four levels. So a tree has many pgtables. Some documents casually use "pgtable" to refer to an entire pgtable tree. Be careful.
 
-* Besides holding a physical address, each pgtable item holds extra bits crucial for translation. Will examine the format below. 
+* There are 4 levels in the table hierarchy: PGD (Page Global Directory), PUD (Page Upper Directory), PMD (Page Middle Directory), PTE (Page Table Entry). PTE is the last table in the hierarchy and it points to the actual page in the physical memory.
+
+  > Don't read too much into the terms, which just represent lv1, 2, ... pgtables. Them terms come from the Linux kernel (x86), not ARM64. Over years, they became a common lingo among kernel hackers.
+
+* Besides holding a physical address, each pgtable item holds extra bits crucial for translation. Will examine the format below.
 
 * MMU starts memory translation process by locating the base address of PGD. MMU locates the base address from the `TTBRx_EL1` register which should be set by the kernel. TTBR = translation table base register.
 
-  * bits [63-47] = 0xffff (all 1s). MMU uses `ttbr1_el1`. This is meant for the kernel space. 
-  * bits [63-47] = 0x0 (all 1s). MMU uses `ttbr0_el1`. This is meant for the user process. 
+  * bits [63-47] = 0xffff (all 1s). MMU uses `ttbr1_el1`. This is meant for the kernel space.
+  * bits [63-47] = 0x0 (all 1s). MMU uses `ttbr0_el1`. This is meant for the user process.
   * Each process has its own address space. Therefore, it has its own copy of page table tree, starting from PGD. Therefore, the kernel keeps a separate PGD base address for each process. That is, the kernel virtualizes PGD for processes. During a context switch, the kernel loads the PGD base of the next process to `ttbr0_el1`.
 
 * MMU walks the pgtable tree to look up the physical address. A virtual address uses only 48 out of 64 available bits.  When doing a translation, MMU splits an address into 4 parts:
@@ -83,7 +83,7 @@ Notable points:
 
 * Memory for a user process is always allocated in pages. A page is a contiguous memory region 4KB in size (ARM processors support larger pages, but 4KB is the most common case and we are going to limit our discussion only to this page size).
 
-**Exercise: how large is a page table?** From the diagram above we know that index in a page table occupies 9 bits (this is true for all page table levels). This means that each page table contains `2^9 = 512` items. Each item in a page table is an address of either the next page table in the hierarchy or a physical page in case of PTE. As we are using a 64-bit processor, each address must be 64 bit or 8 bytes in size. 
+**Exercise: how large is a page table?** From the diagram above we know that index in a page table occupies 9 bits (this is true for all page table levels). This means that each page table contains `2^9 = 512` items. Each item in a page table is an address of either the next page table in the hierarchy or a physical page in case of PTE. As we are using a 64-bit processor, each address must be 64 bit or 8 bytes in size.
 
 This means that each pgtable is `512 * 8 = 4096` bytes or 4 KB. **A pgtable is exactly a page!** This might give you an intuition why MMU designers chose such numbers.
 
@@ -120,7 +120,7 @@ As you can see the difference here is that now PMD contains a pointer to the phy
 
 An item in a page table is called "descriptor". A description has a special format as mandated by MMU hardware. A descriptor contains an address of either next page table or a physical page.
 
-**The key thing to understand**: each descriptor always points to something that is **page-aligned** (either a physical page, a section or the next page table in the hierarchy). This means that last 12 bits of the address, stored in a descriptor, will always be 0. MMU uses those bits to store additional information  ("attributes") for translation. 
+**The key thing to understand**: each descriptor always points to something that is **page-aligned** (either a physical page, a section or the next page table in the hierarchy). This means that last 12 bits of the address, stored in a descriptor, will always be 0. MMU uses those bits to store additional information  ("attributes") for translation.
 
 
 ```
@@ -133,17 +133,17 @@ An item in a page table is called "descriptor". A description has a special form
 
 * **Bit 0** This bit must be set to 1 for all valid descriptors. If MMU encounter non-valid descriptor during translation process a synchronous exception is generated. If this invalid bit was set by kernel on purpose, the kernel shall handle this exception, allocate a new page, and prepare a correct descriptor (We will look in details on how this works a little bit later)
 * **Bit 1** This bit indicates whether the current descriptor points to a next page table in the hierarchy (we call such descriptor a "**table descriptor**") or it points instead to a physical page or a section (such descriptors are called "**block descriptors**").
-* **Bits [11:2]** Those bits are ignored for table descriptors. For block descriptors they contain some attributes that control, for example, whether the mapped page is readable/writeable (AP), executable (XN), etc. Here also comes the MemAttr bits. See below. 
+* **Bits [11:2]** Those bits are ignored for table descriptors. For block descriptors they contain some attributes that control, for example, whether the mapped page is readable/writeable (AP), executable (XN), etc. Here also comes the MemAttr bits. See below.
 * **Bits [47:12]**. This is the place where the address that a descriptor points to is stored. As I mentioned previously, only bits [47:12] of the address need to be stored, because all other bits are always 0.
 * **Bits [63:48]** Another set of attributes.
 
-See [Arm's official page](https://armv8-ref.codingbelief.com/en/chapter_d4/d43_3_memory_attribute_fields_in_the_vmsav8-64_translation_table_formats_descriptors.html#). 
+See [Arm's official page](https://armv8-ref.codingbelief.com/en/chapter_d4/d43_3_memory_attribute_fields_in_the_vmsav8-64_translation_table_formats_descriptors.html#).
 
 ### Configuring page attributes
 
 As I mentioned in the previous section, each block descriptor contains a set of attributes (called MemAttr, bits[5:2]) that controls various virtual page parameters, notably cacheability or shareability. However, the attributes that are most important for our discussion are NOT encoded in the descriptor. Instead, ARM processors implement a trick for compressing descriptor attributes commonly used. (The days of simpler ARM hardware were gone)
 
-**Memory attribute indirection** 
+**Memory attribute indirection**
 
 ARMv8 architecture introduces `mair_el1` register. See [its definition](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/mair_el1). This register consists of 8 slots, each spanning 8 bits. Each slot configures a common set of attributes. A descriptor then specifies just an index of the `mair` slot, instead of specifying all attributes directly. This allows using only 3 bits in the descriptor to reference a `mair` slot. We are using only a few of available attribute options. [Here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/arm/mmu.h#L11) is the code that prepares values for the `mair` register.
 
@@ -165,54 +165,54 @@ ARMv8 architecture introduces `mair_el1` register. See [its definition](https://
 
 Here we are using only 2 out of 8 available slots in the `mair` registers. The first one corresponds to device memory (IO registers) and second to normal non-cacheable memory. `MT_DEVICE_nGnRnE` and `MT_NORMAL_NC` are indexes that we are going to use in block descriptors, `MT_DEVICE_nGnRnE_FLAGS` and `MT_NORMAL_NC_FLAGS` are values that we are storing in the first 2 slots of the `mair_el1` register.
 
-## Kernel vs user virtual memory 
+## Kernel vs user virtual memory
 
-After the MMU is switched on, each memory access issued by kernel must use virtual address instead of physical. One consequence is that the kernel itself must maintain its own set of page tables. One possible solution could be to reload `ttbr` (pointing to the PGD base) each time we switch from user to kernel mode. Reloading `ttbr` can be costly. (Why?) This makes syscalls and page faults expensive. 
+After the MMU is switched on, each memory access issued by kernel must use virtual address instead of physical. One consequence is that the kernel itself must maintain its own set of page tables. One possible solution could be to reload `ttbr` (pointing to the PGD base) each time we switch from user to kernel mode. Reloading `ttbr` can be costly. (Why?) This makes syscalls and page faults expensive.
 
-Commodity kernels therefore avoid frequent reloads of PGD base. A kernel splits the virtual address space into 2 parts: user portion and kernel portion. When switching among user tasks, the kernel only changes the mapping of the user portion while keeping the kernel mapping unchanged. 
+Commodity kernels therefore avoid frequent reloads of PGD base. A kernel splits the virtual address space into 2 parts: user portion and kernel portion. When switching among user tasks, the kernel only changes the mapping of the user portion while keeping the kernel mapping unchanged.
 
-> This classic kernel design turns out to lead to most severe security holes in recent years. Google "spectre and meltdown". 
+> This classic kernel design turns out to lead to most severe security holes in recent years. Google "spectre and meltdown".
 
 On 32-bit CPUs, a kernel usually allocate first 3 GB of the address space for user and reserve last 1 GB for the kernel. 64-bit architectures are much more favorable in this regard because of huge virtual address space (how large?). And even more: ARMv8 architecture comes with a native feature that can be used to easily implement user/kernel address split.
 
-ARM64 defines 2 `TTBR` registers for holding PGD base addresses: 
+ARM64 defines 2 `TTBR` registers for holding PGD base addresses:
 
-* TTBR0_EL1 points to a user PGD; 
-* TTBR1_EL1 points to the kernel PGD. 
+* TTBR0_EL1 points to a user PGD;
+* TTBR1_EL1 points to the kernel PGD.
 
-MMU uses only 48 bits out of 64 bits in the virtual addresses for translation. MMU uses the upper 16 bits in a given virtual address to decide whether it uses TTBR0 or TTBR1. 
+MMU uses only 48 bits out of 64 bits in the virtual addresses for translation. MMU uses the upper 16 bits in a given virtual address to decide whether it uses TTBR0 or TTBR1.
 
-* **User virtual addresses**: upper 16 bits == 0. MMU uses the PGD base stored in TTBR0_EL1.  This value shall be changed according to process switch. 
-* **Kernel virtual addresses**: upper 16 bits == `0xffff`.  MMU uses the PGD base stored in TTBR1_EL1. This value shall remain unchanged throughout the life of the kernel. 
+* **User virtual addresses**: upper 16 bits == 0. MMU uses the PGD base stored in TTBR0_EL1.  This value shall be changed according to process switch.
+* **Kernel virtual addresses**: upper 16 bits == `0xffff`.  MMU uses the PGD base stored in TTBR1_EL1. This value shall remain unchanged throughout the life of the kernel.
 
-The CPU also enforces that software at EL0 can never access virtual addresses started with `0xffff`. Doing so triggers a synchronous exception.  
+The CPU also enforces that software at EL0 can never access virtual addresses started with `0xffff`. Doing so triggers a synchronous exception.
 
-Here is a picture the memory layout. Source: Arm's document "ARMv8-A Address Translation". 
+Here is a picture the memory layout. Source: Arm's document "ARMv8-A Address Translation".
 
 ![addrspace](addrspace.jpg)
 
-### **Adjusting kernel addresses** 
+### **Adjusting kernel addresses**
 
-All absolute kernel addresses must start with `0xffff...`. There are 2 places in the kernel source code shall be changed. 
+All absolute kernel addresses must start with `0xffff...`. There are 2 places in the kernel source code shall be changed.
 
-* In the [linker script](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/linker.ld#L3) we specify base address of the image as `0xffff000000000000`. This will make the linker think that our image is going to be loaded at `0xffff000000000000` address, and therefore whenever it needs to generate an absolute address it will make it right. (There are a few more changes to the linker script, but we will discuss them later.) 
+* In the [linker script](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/linker.ld#L3) we specify base address of the image as `0xffff000000000000`. This will make the linker think that our image is going to be loaded at `0xffff000000000000` address, and therefore whenever it needs to generate an absolute address it will make it right. (There are a few more changes to the linker script, but we will discuss them later.)
 
 * We hardcode absolute kernel base addresses in the [header](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/peripherals/base.h#L7) where we define device base address. After switching on MMU, kernel has to access all IO via virtual addresses. We can map them starting from `0xffff00003F000000`. In the next section we will explore in detail the code that creates this mapping.
 
 ## Kernel boot: initializing kernel page tables
 
-**Important: the linker is completely oblivious to kernel physical address**, e.g. the physical base (0x0 or 0x80000) where the kernel will be loaded. Two Implications: 
+**Important: the linker is completely oblivious to kernel physical address**, e.g. the physical base (0x0 or 0x80000) where the kernel will be loaded. Two Implications:
 
-1. the linker links all kernel symbols at virtual addresses starting from `0xffff000000000000`; 
-2. Before kernel boots and before it turns on MMU, the kernel will operate on physical addresses starting from 0x0 (or 0x80000 for QEMU). 
+1. the linker links all kernel symbols at virtual addresses starting from `0xffff000000000000`;
+2. Before kernel boots and before it turns on MMU, the kernel will operate on physical addresses starting from 0x0 (or 0x80000 for QEMU).
 
 <!--- show a figure of kernel memory map --->
 
-Keep this key constraint in mind. See below. 
+Keep this key constraint in mind. See below.
 
 -------
 
-Right after kernel switches to EL1 and clears the BSS, the kernel populates its pgtables via  [__create_page_tables](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L92) function. 
+Right after kernel switches to EL1 and clears the BSS, the kernel populates its pgtables via  [__create_page_tables](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L92) function.
 
 ```
 // boot.S
@@ -220,20 +220,20 @@ __create_page_tables:
     mov    x29, x30                        // save return address
 ```
 
-First, the function saves `x30` (LR). As we are going to call other functions from `__create_page_tables`, `x30` will be overwritten. 
+First, the function saves `x30` (LR). As we are going to call other functions from `__create_page_tables`, `x30` will be overwritten.
 As we know that no code will use `x29` during `__create_page_tables` execution, preserving LR in `x29` works fine.
 
-> Q: What could go wrong if we push x30 to stack here? 
+> Q: What could go wrong if we push x30 to stack here?
 
 ```
-    adrp    x0, pg_dir // adrp: form PC-relative address to 4KB page 
+    adrp    x0, pg_dir // adrp: form PC-relative address to 4KB page
     mov    x1, #PG_DIR_SIZE
     bl     memzero
 ```
 
-Next, we clear the initial page tables area. An important thing to understand here is where this area is located (x0) and how do we know its size (x1)? 
+Next, we clear the initial page tables area. An important thing to understand here is where this area is located (x0) and how do we know its size (x1)?
 
-* Initial page tables area is defined in the [linker script](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/linker.ld#L20) - this means that we are allocating the spot for this area in the kernel image itself. 
+* Initial page tables area is defined in the [linker script](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/linker.ld#L20) - this means that we are allocating the spot for this area in the kernel image itself.
 
 * Calculating the size of this area is a little bit trickier. First, we need to understand the structure of the initial kernel page tables. We know that all our mappings are all inside 1 GB region (this is the size of RPi3 physical memory). One PGD descriptor can cover `2^39 = 512 GB`  and one PUD descriptor can cover `2^30 = 1 GB` of continuous virtual mapping area. (Those values are calculated based on the PGD and PUD indexes location in the virtual address.) This means that we need just one PGD and one PUD to map the whole RPi memory, and even more - both PGD and PUD will contain a single descriptor (of course we still need to allocate at least one page for them each). If we have a single PUD entry there also must be a single PMD table, to which this entry will point. (Single PMD entry covers 2 MB, there are 512 items in a PMD, so in total the whole PMD table covers the same 1 GB of memory that is covered by a single PUD descriptor.)
   Next, we know that we need to map 1 GB region of memory, which is a multiple of 2 MB. This allows us to keep things simple -- using section mapping. This means that we don't need PTE at all. So in total, we need 3 pages: one for PGD, PUD and PMD - this is precisely the size of the initial page table area.
@@ -241,7 +241,7 @@ Next, we clear the initial page tables area. An important thing to understand he
 >
 > <!---bl memzero, 0x94001246, bl #0x4918 -->
 
-### Allocating & installing a new pgtable 
+### Allocating & installing a new pgtable
 
 Now we are going to step outside `__create_page_tables` function and take a look on 2 essential macros: [create_table_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L68) and [create_block_map](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L77).
 
@@ -280,7 +280,7 @@ The first two lines of the macro are responsible for extracting table index from
     add    \tmp2, \tbl, #PAGE_SIZE
 ```
 
-Then the address of the next page table is calculated. Here we are using the convention that all our initial page tables are located in one continuous memory region. We simply assume that the next page table in the hierarchy will be adjacent to the current page table. 
+Then the address of the next page table is calculated. Here we are using the convention that all our initial page tables are located in one continuous memory region. We simply assume that the next page table in the hierarchy will be adjacent to the current page table.
 
 ----------------------------------------
 
@@ -425,14 +425,14 @@ Finally, the function restored link register and returns to the caller.
 
 ### Configuring page translation
 
-Now page tables are created and we are back to the `el1_entry` function. But there is still some work to be done before we can switch on the MMU. 
+Now page tables are created and we are back to the `el1_entry` function. But there is still some work to be done before we can switch on the MMU.
 
 ```
     mov    x0, #VA_START
     add    sp, x0, #LOW_MEMORY
 ```
 
-We are updating init task stack pointer. Now it uses a virtual address, instead of a physical one. Therefore it could be used only after MMU is on. Recall that our kernel uses linear mapping therefore an offset is simply applied. 
+We are updating init task stack pointer. Now it uses a virtual address, instead of a physical one. Therefore it could be used only after MMU is on. Recall that our kernel uses linear mapping therefore an offset is simply applied.
 
 -----------------------------
 
@@ -476,12 +476,12 @@ We already discussed `mair` register in the "Configuring page attributes" sectio
 
 `msr    sctlr_el1, x0` is the line where MMU is actually enabled. Now we can jump to the `kernel_main` function. **From this moment onward kernel runs on virtual addresses completely. **
 
-An interesting question is why can't we just execute `br kernel_main` instruction? Indeed, we can't. Before the MMU was enabled we have been working with physical memory, the kernel is loaded at a physical offset 0 - this means that current program counter (PC) is very close to 0. Switching on the MMU doesn't update PC. `br kernel_main` uses offset relative to the current PC and jumps to the place were `kernel_main` would have been if we don't turn on the MMU. 
+An interesting question is why can't we just execute `br kernel_main` instruction? Indeed, we can't. Before the MMU was enabled we have been working with physical memory, the kernel is loaded at a physical offset 0 - this means that current program counter (PC) is very close to 0. Switching on the MMU doesn't update PC. `br kernel_main` uses offset relative to the current PC and jumps to the place were `kernel_main` would have been if we don't turn on the MMU.
 
-> Example: in generating the kernel binary, the linker starts from base address `0xffff000000000000` as controlled by our linker script. It assigns the instruction "br kernel_main" to address 0xffff000000000080; it assigns kernel_main to 0xffff000000003190. The instruction "br kernel_main" will be a relative jump, and will be emitted as "br #0x3110" (we  can verify this by disassembling the kernel binary). 
+> Example: in generating the kernel binary, the linker starts from base address `0xffff000000000000` as controlled by our linker script. It assigns the instruction "br kernel_main" to address 0xffff000000000080; it assigns kernel_main to 0xffff000000003190. The instruction "br kernel_main" will be a relative jump, and will be emitted as "br #0x3110" (we  can verify this by disassembling the kernel binary).
 > At run time, when we reach "br kernel_main", PC is 0x80. Executing the instruction will update PC is to 0x3190. As MMU is on now, CPU fetches instruction at 0x3190 via MMU. A translation fault!
 
-`ldr x2, =kernel_main` does not suffer from the problem. CPU loads `x2` with the link address of `kernel_main`, e.g. 0xffff000000003190. Different from `br kernel_main` which uses PC-based offset, `br x2` jumps to an absolute address stored in x2 (this is called long jmp). Therefore, PC will be updated with the link address of `kernel_main` which can be translated via MMU. In other words, by executing a long jmp, we "synchronize" the PC value with virtual addresses. 
+`ldr x2, =kernel_main` does not suffer from the problem. CPU loads `x2` with the link address of `kernel_main`, e.g. 0xffff000000003190. Different from `br kernel_main` which uses PC-based offset, `br x2` jumps to an absolute address stored in x2 (this is called long jmp). Therefore, PC will be updated with the link address of `kernel_main` which can be translated via MMU. In other words, by executing a long jmp, we "synchronize" the PC value with virtual addresses.
 
 Another question: why `ldr x2, =kernel_main` itself must be executed before we turn on the MMU? The reason is that `ldr` also uses `pc` relative offset.  See the [manual](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802b/LDR_reg_gen.html). On my build, it emitted as `ldr x2, #0x10c`. So if we execute this instruction *after* MMU is on but *before* we "synchronize" PC, MMU will give another translation fault.
 
@@ -499,15 +499,15 @@ Commodity kernels load user programs as ELF from filesystems. We won't be buildi
     user_end = .;
 ```
 
-I made a convention: user level source code should be defined in C source files named as "userXXX". The linker script then can isolate all user related code in a continuous region, of which the start and end are marked with  `user_begin` and `user_end` symbols. At run time, the kernel simply copies everything between `user_begin` and `user_end` to the newly allocated process address space, thus simulating loading a user program. A simple hack, but suffice for our current purpose. 
+I made a convention: user level source code should be defined in C source files named as "userXXX". The linker script then can isolate all user related code in a continuous region, of which the start and end are marked with  `user_begin` and `user_end` symbols. At run time, the kernel simply copies everything between `user_begin` and `user_end` to the newly allocated process address space, thus simulating loading a user program. A simple hack, but suffice for our current purpose.
 
 ### Aside: our user symbol addresses
 
 As user programs will be linked as part the kernel binary, the linker will place all user symbols (functions & variables) in the kernel's address space (0xffff000000000000 onwards). You can verify this by, e.g. `nm kernel8.elf|grep " user_"`. How could such user programs work?
 
-We rely on an assumption: our user programs are simple enough; they always address memory with register-relative offsets but not absolute address. You can verify this by disassembly. However, if our programs, e.g. call functions via pointers, the entailed long jmp will target absolute virtual address inside kernel and will trigger exception. 
+We rely on an assumption: our user programs are simple enough; they always address memory with register-relative offsets but not absolute address. You can verify this by disassembly. However, if our programs, e.g. call functions via pointers, the entailed long jmp will target absolute virtual address inside kernel and will trigger exception.
 
-This assumption can't go a long way. The right solution would be linking user programs and kernel separately. 
+This assumption can't go a long way. The right solution would be linking user programs and kernel separately.
 
 Right now there are 2 files that are compiled in the user region.
 
@@ -595,7 +595,7 @@ Next, we are going to copy the whole user region to the new address space (in th
 
 Finally, we call [set_pgd](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/utils.S#L24), which updates `ttbr0_el1` register and thus activates the current process translation tables.
 
-### Aside: TLB 
+### Aside: TLB
 
 If you take a look at the `set_pgd` function you will see that after it sets `ttbr0_el1` it also clears [TLB](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) (Translation lookaside buffer). TLB is a cache that is designed specifically to store the mapping between physical and virtual pages. The first time some virtual address is mapped into a physical one this mapping is stored in TLB. Next time we need to access the same page we no longer need to perform full page table walk. Therefore it makes perfect sense that we invalidate TLB after updating page tables - otherwise our change will not be applied for the pages already stored in the TLB.
 
@@ -616,9 +616,9 @@ unsigned long allocate_user_page(struct task_struct *task, unsigned long va) {
 }
 ```
 
-This function allocates a new page, maps it to the provided virtual address and returns a pointer to the page. When we say "a pointer" now we need to distinguish between 3 things: a pointer to a physical page, a pointer inside kernel address space and a pointer inside user address space - all these 3 different pointers can lead to the same location in memory. 
+This function allocates a new page, maps it to the provided virtual address and returns a pointer to the page. When we say "a pointer" now we need to distinguish between 3 things: a pointer to a physical page, a pointer inside kernel address space and a pointer inside user address space - all these 3 different pointers can lead to the same location in memory.
 
-In our case `page` variable is a physical pointer (note its "unsigned long" type -- not a C pointer!) and the return value is a pointer inside kernel address space. This pointer can be easily calculated because we linearly map the whole physical memory starting at `VA_START` virtual address. Through the pointer, our kernel copies the user program to the page. Does our kernel have a virtual mapping for the new page? We do not have to worry, because kernel maps the entire physical memory in `boot.S`. 
+In our case `page` variable is a physical pointer (note its "unsigned long" type -- not a C pointer!) and the return value is a pointer inside kernel address space. This pointer can be easily calculated because we linearly map the whole physical memory starting at `VA_START` virtual address. Through the pointer, our kernel copies the user program to the page. Does our kernel have a virtual mapping for the new page? We do not have to worry, because kernel maps the entire physical memory in `boot.S`.
 
 --------------------------------
 
@@ -655,7 +655,7 @@ void map_page(struct task_struct *task, unsigned long va, unsigned long page){
 
 ------------------------
 
-There are 2 important functions involved in the process:  [map_table](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L47) and [map_table_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L40). 
+There are 2 important functions involved in the process:  [map_table](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L47) and [map_table_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L40).
 
 `map_table` is listed below.
 
@@ -698,7 +698,7 @@ void map_table_entry(unsigned long *pte, unsigned long va, unsigned long pa) {
 
 ---------------------------------
 
-`map_table_entry` extracts PTE index from the virtual address and then prepares and sets PTE descriptor. It is similar to what we've been doing in the `create_block_map` macro. 
+`map_table_entry` extracts PTE index from the virtual address and then prepares and sets PTE descriptor. It is similar to what we've been doing in the `create_block_map` macro.
 
 That's it about user page tables allocation, but `map_page` is responsible for one more important role: it keeps track of the pages that have been allocated during the process of virtual address mapping. All such pages are stored in the [kernel_pages](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/sched.h#L53) array. We need this array to be able to clean up allocated pages after a task exits. There is also [user_pages](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/sched.h#L51) array, which is also populated by the `map_page` function. This array store information about the correspondence between process virtual pages any physical pages. We need this information in order to be able to copy process virtual memory during `fork` (More on this later).
 
@@ -719,7 +719,7 @@ void loop(char* str)
     }
 }
 
-void user_process() 
+void user_process()
 {
     call_sys_write("User process\n\r");
     int pid = call_sys_fork();
@@ -802,7 +802,7 @@ It iterates over `user_pages` array, which contains all pages, allocated by the 
 
 All other details of the forking procedure work exactly in the same way, as they have been in the previous lesson.
 
-> Q: does our fork() implement COW? 
+> Q: does our fork() implement COW?
 
 <!--- ### Allocating new pages on demand --->
 
