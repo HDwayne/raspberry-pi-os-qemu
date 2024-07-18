@@ -48,19 +48,19 @@ Experimenting with these features is difficult with commodity kernels due to the
 
 ## Experiments
 0. **Getting started**
-      * [Sharpen your tools!](lesson00/rpi-os.md) (p1 exp0)
-1. **Helloworld from baremetal** (p1 exp1)
+      * [Sharpen your tools!](lesson00/rpi-os.md)
+1. **Helloworld from baremetal**
       * [Power on + UART bring up](lesson01/rpi-os.md)
-2. **Exception elevated** (p1 exp2)
+2. **Exception elevated**
       * [CPU initialization, exception levels](lesson02/rpi-os.md)
-3. **Heartbeats on** (p1 exp3)
+3. **Heartbeats on**
       * [Interrupt handling](lesson03/rpi-os.md)
-4. **Process scheduler** (p1 exp4)
+4. **Process scheduler**
       * [A. Cooperative](lesson04a/rpi-os.md)
       * [B. Preemptive](lesson04b/rpi-os.md)
-5. **A world of two lands** (p1 exp5)
+5. **A world of two lands**
       * [User processes and system calls](lesson05/rpi-os.md)
-6. **Into virtual** (p1 exp6)
+6. **Into virtual**
       * [Virtual memory management](lesson06/rpi-os.md)
 
 ## Acknowledgements
