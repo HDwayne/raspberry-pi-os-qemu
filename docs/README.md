@@ -1,18 +1,18 @@
 # A tiny, modern kernel for Raspberry Pi 3
 
-Experiment descriptions are for you to read & reproduce. The assignments will be on Collab. They include Q&A and coding assignments.
+Experiment descriptions are for you to read & reproduce.
 
 **Get the code**:
 
 ```
-git clone https://github.com/fxlin/p1-kernel
+git clone https://github.com/mpoquet/raspberry-pi-os-qemu
 ```
 
 A tiny kernel *incrementally built* for OS education.
 
 Start with minimal, baremetal code. Then add kernel features in small doses.
 
-Each experiment is a self-contained and can run on both Rpi3 hardware and QEMU.
+Each experiment is self-contained and can run on both Rpi3 hardware and QEMU.
 
 ## Rationale
 
@@ -36,7 +36,7 @@ Experimenting with these features is difficult with commodity kernels due to the
 * Daring to plumb: working with baremetal hardware: CPU protection modes, registers, IO, MMU, etc.
 
 **Secondary:**
-* Armv8 programming. Arm is everywhere, including future Mac.
+* Aarch64 programming
 * Working with C and assembly
 * Cross-platform development
 
@@ -46,18 +46,15 @@ Experimenting with these features is difficult with commodity kernels due to the
 * Rpi3-specific hardware details. The SoC of Rpi3 is notoriously unfriendly to kernel hackers.
 * Implementation details of commodity kernels, e.g. Linux or Windows.
 
-<!---- to complete --->
-
 ## Experiments
-0. **[Sharpen your tools!](lesson00/rpi-os.md)** (p1 exp0)
+0. **Getting started**
+      * [Sharpen your tools!](lesson00/rpi-os.md) (p1 exp0)
 1. **Helloworld from baremetal** (p1 exp1)
       * [Power on + UART bring up](lesson01/rpi-os.md)
-      * [Simplifying dev workflow](lesson01/workflow.md)
 2. **Exception elevated** (p1 exp2)
       * [CPU initialization, exception levels](lesson02/rpi-os.md)
 3. **Heartbeats on** (p1 exp3)
       * [Interrupt handling](lesson03/rpi-os.md)
-      * [Interrupt-driven animation](lesson03/fb.md)
 4. **Process scheduler** (p1 exp4)
       * [A. Cooperative](lesson04a/rpi-os.md)
       * [B. Preemptive](lesson04b/rpi-os.md)
@@ -66,20 +63,6 @@ Experimenting with these features is difficult with commodity kernels due to the
 6. **Into virtual** (p1 exp6)
       * [Virtual memory management](lesson06/rpi-os.md)
 
-## Assignment weights
-
-| Exp                                 | Weights |
-| ----------------------------------- | ------- |
-| 00 Sharpen your tools               | 10      |
-| 01 Helloworld from baremetal        | 10      |
-| 02 Exception elevated               | 10      |
-| 03 Heartbeats on                    | 10      |
-| 04a Process scheduler - cooperative | 10      |
-| 04b Process scheduler - preemptive  | 10      |
-| 05 A world of two lands             | 20      |
-| 06 Into virtual                     | 20      |
-
-The weights are relative and may not necessarily add up to 100.
-
-## Acknowledgement
-Derived from the RPi OS project and its tutorials, which is modeled after the [Linux kernel](https://github.com/torvalds/linux).
+## Acknowledgements
+1. Sergey Matyukevich, Alexandre Venito et al. made the educational kernel and most of the resources in https://github.com/s-matyukevich/raspberry-pi-os
+2. Felix Xiaozhu Lin et al. adapted the codebase to make it work on QEMU and improved the content in https://github.com/fxlin/p1-kernel
