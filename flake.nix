@@ -20,7 +20,7 @@
           cross-compiler = cross-pkgs.mkShell {
             buildInputs = [];
             hardeningDisable = [ "fortify" ];
-            ARMGNU="aarch64-unknown-linux-gnu";
+            CHAINPREFIX="aarch64-unknown-linux-gnu-";
           };
 
           cross-qemu = pkgs.mkShell {

@@ -1,4 +1,4 @@
-ARMGNU ?= aarch64-linux-gnu
+CHAINPREFIX ?= aarch64-linux-gnu-
 
 COPS = -Wall -nostdlib -fno-stack-protector -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0 -DUSE_QEMU
 ASMOPS = -Iinclude -g -DUSE_QEMU
@@ -13,16 +13,16 @@ clean:
 
 $(BUILD_DIR)/%_c.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
-	$(ARMGNU)-gcc $(COPS) -MMD -c $< -o $@
+	$(CHAINPREFIX)gcc $(COPS) -MMD -c $< -o $@
 
 # xzl: font build rules. NB: the symbols in the binary will have subdir as prefix like "src".
 #$(BUILD_DIR)/%_psf.o: $(SRC_DIR)/%.psf
 $(BUILD_DIR)/%_psf.o: %.psf
 	mkdir -p $(@D)
-	$(ARMGNU)-ld -r -b binary -o $@ $<
+	$(CHAINPREFIX)ld -r -b binary -o $@ $<
 
 $(BUILD_DIR)/%_s.o: $(SRC_DIR)/%.S
-	$(ARMGNU)-gcc $(ASMOPS) -MMD -c $< -o $@
+	$(CHAINPREFIX)gcc $(ASMOPS) -MMD -c $< -o $@
 
 C_FILES = $(wildcard $(SRC_DIR)/*.c)
 ASM_FILES = $(wildcard $(SRC_DIR)/*.S)
@@ -34,5 +34,5 @@ DEP_FILES = $(OBJ_FILES:%.o=%.d)
 -include $(DEP_FILES)
 
 kernel8.img: $(SRC_DIR)/linker-qemu.ld $(OBJ_FILES)
-	$(ARMGNU)-ld -T $(SRC_DIR)/linker-qemu.ld -o $(BUILD_DIR)/kernel8.elf  $(OBJ_FILES)
-	$(ARMGNU)-objcopy $(BUILD_DIR)/kernel8.elf -O binary kernel8.img
+	$(CHAINPREFIX)ld -T $(SRC_DIR)/linker-qemu.ld -o $(BUILD_DIR)/kernel8.elf  $(OBJ_FILES)
+	$(CHAINPREFIX)objcopy $(BUILD_DIR)/kernel8.elf -O binary kernel8.img
