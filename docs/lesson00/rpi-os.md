@@ -12,12 +12,12 @@ git clone https://github.com/mpoquet/raspberry-pi-os-qemu
   A Nix flake is provided at the root of this repository to install a tested cross-compilation toolchain on any Linux.
 - If your host machine already runs an Aarch64 Linux, you just need a normal `gcc` compilation toolchain.
 - If you are running MacOS on Aarch64, you can try `aarch64-elf-gcc` on homebrew.
-- If you are not running Linux, install a Linux.
+- If you are not running Linux, install a Linux.  
   A VM installation should be enough, as we will not measure performance overhead in this course.
 
 ### Other tools
 - You need a way to run the provided Makefiles. They have been tested using `gnumake-4.4.1`.
-- Having a debugger that understands aarch64 is highly recommended. The provided tested debugger is `gdb-14.2`.
+- Having a debugger that understands Aarch64 is highly recommended. The provided tested debugger is `gdb-14.2`.
 - Utilities to inspect binary files is recommended. These tools are very often packaged as `binutils`.
 
 ### Testing your development toolchain
@@ -27,6 +27,7 @@ You must set this environment variable appropriately depending on the exact name
 - Example 1: If you use the provided Nix environment, `CHAINPREFIX` is already set to `aarch64-unknown-linux-gnu-` as the cross-compilation gcc binary should be named `aarch64-unknown-linux-gnu-gcc`.
 - Example 2: If you do not need cross-compilation toolchain, `CHAINPREFIX` should be empty as the gcc binary should be named `gcc`.
 
+Adapt the `CHAINPREFIX` to your installation.
 To test if your configuration if correct, check whether the following three commands work.
 
 ```sh
@@ -37,10 +38,11 @@ ${CHAINPREFIX}objcopy --version
 
 #### Build kernel of lesson01
 
-0. (Download and go into this course git repo: `git clone https://github.com/mpoquet/raspberry-pi-os-qemu && cd raspberry-pi-os-qemu`)
+0. Download and go into this course git repo:  
+   `git clone https://github.com/mpoquet/raspberry-pi-os-qemu && cd raspberry-pi-os-qemu`
 1. Go into the lesson01 directory: `cd src/lesson01`
-2. Compile the kernel: `make`
-   **Note**: it should not generate any error if your configuration is correct
+2. Compile the kernel: `make`  
+   **Note**: This should not generate any error if your configuration is correct
 3. A `kernel8.img` file should now be present in your directory
 
 ## Test Platform
@@ -51,7 +53,8 @@ This is where you run the kernel code.
 We will only run the kernels via [QEMU](https://www.qemu.org/) in this course.
 
 You need a QEMU that supports target architecture Aarch64, and that can run systems (not only user programs).
-Such a QEMU should be available in any decent Linux distribution. For MacOS users, the `qemu` package seems to work.
+Such a QEMU should be available in any decent Linux distribution.
+For MacOS users, the `qemu` package seems to work.
 
 The QEMU tested and provided in the Nix flake has version 8.2.4, and the provided binary is named `qemu-system-aarch64`.
 
