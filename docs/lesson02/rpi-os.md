@@ -4,11 +4,7 @@
 
 ## Objectives
 
-**Source code location: p1-kernel/src/lesson02**
-
-We are going to build:
-
-A baremetal program that can switch among CPU exception levels and print out the current level.
+We are going to build a baremetal program that can switch among CPU exception levels and print out the current level.
 
 Students will:
 
@@ -54,7 +50,7 @@ Whenever an exception is generated the following sequence of steps takes place (
 1. The CPU executes an exception handler at ELn.
 1. The exception handler calls `eret` instruction. This instruction restores processor state from `SPSR_ELn` and resumes execution starting from the address, stored in the `ELR_ELn`  register.
 
-There are more details, e.g. the exception handler software also needs to store the state of all general purpose registers and restore it back afterwards, as we will discuss this process in details in the upcoming experiment. For now, we need just to understand the process in general and remember the meaning of the `ELR_ELm` and `SPSR_ELn` registers.
+There are more details, *e.g.*, the exception handler software also needs to store the state of all general purpose registers and restore it back afterwards, as we will discuss this process in details in the upcoming experiment. For now, we need just to understand the process in general and remember the meaning of the `ELR_ELm` and `SPSR_ELn` registers.
 
 An important thing to know is that exception handler is not obliged to return to the same instruction where the exception originates. Both `ELR_ELm` and `SPSR_ELn` are writable and the exception handler can modify them in order to specify the instructions to execute right after the EL switch. We are going to use this technique to our advantage when we try to switch from EL3 to EL1 in our code.
 
@@ -64,7 +60,7 @@ An important thing to know is that exception handler is not obliged to return to
 
 Right now, the kernel can only print some constant string on a screen, but what I need is some analog of [printf](https://en.wikipedia.org/wiki/Printf_format_string) function. With `printf` I can easily display values of different registers and variables. Such functionality is essential for the kernel development because you don't have any other debugger support and `printf` becomes the only mean for figuring out what is going on inside Rpi3.
 
-Let's not reinvent the wheel and use one of  [existing printf implementations](http://www.sparetimelabs.com/tinyprintf/tinyprintf.php) This function consists mostly from string manipulations and is not very interesting from a kernel developer point of view. The implementation that I used is very small and don't have external dependencies, that allows it to be easily integrated into the kernel. The only thing that I have to do is to define `putc`  function that can send a single character to the screen. This function is defined [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/src/mini_uart.c#L59) and it just uses already existing `uart_send` function. Also, we need to initialize the `printf` library and specify the location of the `putc` function. This is done in a single [line of code](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/src/kernel.c#L8).
+Let's not reinvent the wheel and use one of [existing printf implementations](http://www.sparetimelabs.com/tinyprintf/tinyprintf.php) This function consists mostly from string manipulations and is not very interesting from a kernel developer point of view. The implementation that I used is very small and don't have external dependencies, that allows it to be easily integrated into the kernel. The only thing that I have to do is to define `putc` function that can send a single character to the screen. This function is defined [here](../../src/lesson02/src/mini_uart.c#L59) and it just uses already existing `uart_send` function. Also, we need to initialize the `printf` library and specify the location of the `putc` function. This is done in a single [line of code](../../src/lesson02/src/kernel.c#L8).
 
 ### QEMU + GDB debugging
 
@@ -76,7 +72,7 @@ Reminder: GDB allows you to do single step, etc. It may help understand/debug sp
 
 As we are equipped with the `printf` function, we can proceed to figure out at which exception level the kernel is booted. A small function that can answer this question looks like this.
 
-```
+```assembly
 .globl get_el
 get_el:
     mrs x0, CurrentEL
@@ -84,22 +80,22 @@ get_el:
     ret
 ```
 
-Here we use `mrs` instruction to read the value from `CurrentEL` system register into `x0` register. Then we shift this value 2 bits to the right (because the lowest 2 bits in the `CurrentEL` register are reserved and always have value 0). Finally the register `x0` contains an integer number indicating current exception level. Now the only thing that is left is to display this value, like [this](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/src/kernel.c#L10).
+Here we use `mrs` instruction to read the value from `CurrentEL` system register into `x0` register. Then we shift this value 2 bits to the right (because the lowest 2 bits in the `CurrentEL` register are reserved and always have value 0). Finally the register `x0` contains an integer number indicating current exception level. Now the only thing that is left is to display this value, like [this](../../src/lesson02/src/kernel.c#L10).
 
-```
+```c
     int el = get_el();
     printf("Exception level: %d \r\n", el);
 ```
 
-**Rpi3:** If you reproduce this experiment, you should see `Exception level: 3` on the screen. This means the CPU executes as the security monitor when it boots up.
+**Rpi3:** If you reproduce this experiment on real Raspi3 hardware, you should see `Exception level: 3` on the screen. This means the CPU executes as the security monitor when it boots up.
 
-**QEMU:** You will see `Exception level: 2` because this is how QEMU emulates the CPU: setting the initial EL as 2. Why?
+**QEMU:** If you reproduce this experiment on QEMU, you will see `Exception level: 2` because this is how QEMU emulates the CPU: setting the initial EL as 2.
 
 ### Switching to EL1
 
 EL1 is intended for OS kernels. Strictly speaking, our kernel is not obliged to switch to EL1 when it boots up, but EL1 is a natural choice for us because this level has just the right set of privileges to implement all common OS tasks. It also will be an interesting exercise to see how switching exceptions levels works in action. Let's take a look at the source code that does this (boot.S).
 
-```
+```assembly
 master:
     ldr    x0, =SCTLR_VALUE_MMU_DISABLED
     msr    sctlr_el1, x0
@@ -123,14 +119,14 @@ The code configures a few system registers. Now we are going to examine those re
 
 #### SCTLR_EL1, System Control Register (EL1)
 <!----Page 2654 of AArch64-Reference-Manual--->
-```
+```assembly
     ldr    x0, =SCTLR_VALUE_MMU_DISABLED
     msr    sctlr_el1, x0
 ```
 
 Here we set the value of the `sctlr_el1` system register. `sctlr_el1` is responsible for configuring different parameters of CPU when CPU operates at EL1. For example, it controls whether the cache is enabled and, what is most important for us, whether the MMU (Memory Management Unit) is turned on. `sctlr_el1` is accessible from all exception levels higher or equal than EL1 (you can infer this from `_el1` postfix)
 
-`SCTLR_VALUE_MMU_DISABLED` constant is defined [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/include/arm/sysregs.h#L16) Individual bits of this value are defined like this:
+`SCTLR_VALUE_MMU_DISABLED` constant is defined [here](../../src/lesson02/include/arm/sysregs.h#L16) Individual bits of this value are defined like this:
 
 * `#define SCTLR_RESERVED                  (3 << 28) | (3 << 22) | (1 << 20) | (1 << 11)` Some bits in the description of `sctlr_el1` register are marked as `RES1`. Those bits are reserved for future usage and should be initialized with `1`.
 * `#define SCTLR_EE_LITTLE_ENDIAN          (0 << 25)` Exception [Endianness](https://en.wikipedia.org/wiki/Endianness). This field controls endianess of explicit data access at EL1. We are going to configure the processor to work only with `little-endian` format.
@@ -144,7 +140,7 @@ FYI - [official doc](https://developer.arm.com/docs/ddi0595/b/aarch64-system-reg
 #### HCR_EL2, Hypervisor Configuration (EL2)
 <!--- Page 2487 of AArch64-Reference-Manual.  -->
 
-```
+```assembly
     ldr    x0, =HCR_VALUE
     msr    hcr_el2, x0
 ```
@@ -158,12 +154,12 @@ In `sysregs.h` we set HCR_VALUE to be (1<<31).
 #### SCR_EL3, Secure Configuration (EL3)
 <!----Page 2648 of AArch64-Reference-Manual --->
 
-```
+```assembly
     ldr    x0, =SCR_VALUE
     msr    scr_el3, x0
 ```
 
-This register is responsible for configuring security settings. For example, it controls whether all lower levels are executed in "secure" or "nonsecure" world. It also controls execution state at EL2. [Here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/include/arm/sysregs.h#L26) we set that EL2 will execute at `AArch64` state, and all lower exception levels will be "non secure".
+This register is responsible for configuring security settings. For example, it controls whether all lower levels are executed in "secure" or "nonsecure" world. It also controls execution state at EL2. [Here](../../src/lesson02/include/arm/sysregs.h#L26) we set that EL2 will execute at `AArch64` state, and all lower exception levels will be "non secure".
 
 This register has no counterpart at EL2. Therefore, we don't have to set it on qemu emulation.
 
@@ -172,12 +168,10 @@ This register has no counterpart at EL2. Therefore, we don't have to set it on q
 #### SPSR_EL3, Saved Program Status (EL3)
 <!-----------Page 389 of AArch64-Reference-Manual --------->
 
-```
+```assembly
     ldr    x0, =SPSR_VALUE
     msr    spsr_el3, x0
 ```
-
-<!---This register should be already familiar to you - we mentioned it when discussed the process of changing exception levels.-->
 
 `spsr_el3` contains CPU state, that will be restored after we execute `eret` instruction.
 What is CPU state? It consists of the following information:
@@ -188,7 +182,7 @@ What is CPU state? It consists of the following information:
 
 * **EL & other information**, required to fully restore the processor execution state after an exception is handled.
 
-Usually `spsr_el3` is saved automatically by CPU hardware, when an exception is taken to EL3. Furthermore, this register is writable by our code, so we take advantage of this fact and manually prepare CPU state. `SPSR_VALUE` is prepared [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/include/arm/sysregs.h#L35) and we initialize the following fields:
+Usually `spsr_el3` is saved automatically by CPU hardware, when an exception is taken to EL3. Furthermore, this register is writable by our code, so we take advantage of this fact and manually prepare CPU state. `SPSR_VALUE` is prepared [here](../../src/lesson02/include/arm/sysregs.h#L35) and we initialize the following fields:
 
 * `#define SPSR_MASK_ALL        (7 << 6)` After we change EL to EL1 all types of interrupts will be masked (or disabled, which is the same).
 * `#define SPSR_EL1h        (5 << 0)` This indicates to which EL the `eret` instruction will take the CPU to. It's EL1. About EL1h: At EL1 we can either use our own dedicated stack pointer or use EL0 stack pointer. `EL1h` mode means that we are using EL1 dedicated stack pointer.
@@ -198,7 +192,7 @@ Usually `spsr_el3` is saved automatically by CPU hardware, when an exception is 
 #### ELR_EL3, Exception Link (EL3)
 <!----- Page 351 of AArch64-Reference-Manual.---->
 
-```
+```assembly
     adr    x0, el1_entry
     msr    elr_el3, x0
     eret
@@ -218,10 +212,8 @@ Qemu.log:
 Exception return from AArch64 EL2 to AArch64 EL1 PC 0x80038
 ```
 
-The address 0x80038 should point to el1_entry. Check it out using addr2line.
+The address `0x80038` should point to `el1_entry`. Check it out using `addr2line`.
 
 Our subsequent experiments will switch between EL1 (kernel) and EL0 (user) frequently.
 
 Go ahead and try it out!
-
-<!--- add submission instructions --->
