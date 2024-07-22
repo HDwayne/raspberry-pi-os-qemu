@@ -1,24 +1,20 @@
 # A tiny, modern kernel for Raspberry Pi 3
+A tiny kernel *incrementally built* for OS education.
+Start with minimal, baremetal code. Then add kernel features in small doses.
 
+Each experiment is self-contained and can run on both Rpi3 hardware and QEMU.
 Experiment descriptions are for you to read & reproduce.
 
 **Get the code**:
 
-```
+```sh
 git clone https://github.com/mpoquet/raspberry-pi-os-qemu
 ```
 
-A tiny kernel *incrementally built* for OS education.
-
-Start with minimal, baremetal code. Then add kernel features in small doses.
-
-Each experiment is self-contained and can run on both Rpi3 hardware and QEMU.
-
 ## Rationale
-
 The kernel must run on cheap & modern hardware.
-
-Showing the kernel's evolution path is important. Along the path, each version must be self-contained runnable.
+Showing the kernel's evolution path is important.
+Along the path, each version must be self-contained and runnable.
 
 We deem the following kernel functions crucial to implement:
 * protection modes
@@ -29,7 +25,6 @@ We deem the following kernel functions crucial to implement:
 Experimenting with these features is difficult with commodity kernels due to their complexity.
 
 ## Goals
-
 **Primary:**
 * Learning by doing: the core concepts of a modern OS kernel
 * Experiencing OS engineering: hands-on programming & debugging at the hardware/software boundary
@@ -41,10 +36,9 @@ Experimenting with these features is difficult with commodity kernels due to the
 * Cross-platform development
 
 **Non-goals:**
-
-* Non-core or advanced functions of OS kernel, e.g. filesystem or power management, which can be learnt via experimenting with commodity OS.
-* Rpi3-specific hardware details. The SoC of Rpi3 is notoriously unfriendly to kernel hackers.
-* Implementation details of commodity kernels, e.g. Linux or Windows.
+* Non-core or advanced functions of OS kernel, *e.g.*, filesystem or power management, which can be learnt via experimenting with commodity OS
+* Rpi3-specific hardware details. The SoC of Rpi3 is notoriously unfriendly to kernel hackers
+* Implementation details of commodity kernels, *e.g.*, Linux or Windows
 
 ## Documentation
 * [Aarch64 cheatsheet](aarch64-cheatsheet.md)
