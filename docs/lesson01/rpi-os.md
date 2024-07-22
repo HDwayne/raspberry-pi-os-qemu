@@ -269,7 +269,7 @@ master:
 
 Here, we clean the `.bss` section by calling `memzero`. We will define this function later. In ARMv8 architecture, by convention, the first seven arguments are passed to the called function via registers x0–x6 (cf: our cheat sheet). The `memzero` function accepts only two arguments: the start address (`bss_begin`) and the size of the section needed to be cleaned (`bss_end - bss_begin`).
 
-```
+```assembly
     mov    sp, #LOW_MEMORY
     bl    kernel_main
 ```
@@ -571,21 +571,4 @@ This function just iterates over all characters in a string and sends them one b
 
 ## Take the kernel for a spin
 
-### QEMU
-
-**Setup**
-
-Follow the instructions in [Prerequisites](../lesson00/rpi-os.md).
-
-Type `make`
-
-**Run**
-
-Command: `qemu-system-aarch64 -machine raspi3b -serial null -serial mon:stdio -nographic -kernel ./kernel8.img`
-
-Expected log:
-```
-Hello, world!
-This should display what you type.
-Ctrl+A,X to quit QEMU
-```
+Please refer to instructions of [Lesson00](../lesson00/rpi-os.md) to compile and run the kernel.
