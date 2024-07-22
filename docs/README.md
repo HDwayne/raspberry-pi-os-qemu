@@ -69,4 +69,4 @@ Experimenting with these features is difficult with commodity kernels due to the
 ## Acknowledgements
 1. Sergey Matyukevich, Alexandre Venito et al. made the educational kernel and most of the resources in https://github.com/s-matyukevich/raspberry-pi-os
 2. Felix Xiaozhu Lin et al. adapted the codebase to make it work on QEMU and improved the content in https://github.com/fxlin/p1-kernel
-3. Millian Poquet adapted the codebase for its operating system design course.
+3. Millian Poquet adapted the codebase for his operating system design course in https://github.com/mpoquet/raspberry-pi-os-qemu
