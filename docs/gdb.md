@@ -1,59 +1,35 @@
 # Using GDB to debug kernel
 
-**NOTE**:
-
-1. Read the whole document before you attempt GDB.
-2. *WSL users who want to develop on local machines instead of the server*: gdbserver may not play well with WSL. See "troubleshooting"  below. You are fine if you develop on the server.
-
 ## GDB Installation
 
-We've done this on the server already. Do this if developing on local machines (Linux or WSL).
-
-```
-sudo apt install gdb-multiarch gcc-aarch64-linux-gnu build-essential
-```
-Note: the gdb for aarch64 is NOT called aarch64-XXXX-gdb.
+You need a decent GDB (various fixes around Aarch64 have been made in 2016-2017),
+which should be available in any decent Linux distribution.
 
 ## The workflow
 
 ### Launch QEMU + the kernel and wait for the debugger
 
-```
+```sh
 # will wait for gdb to connect at local tcp 1234
-qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -s -S
+qemu-system-aarch64 -machine raspi3b -serial null -serial mon:stdio -nographic -kernel ./kernel8.img -s -S
 
 # OR, will wait for gdb to connect at local tcp 5678
-qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -gdb tcp::5678 -S
+qemu-system-aarch64 -machine raspi3b -serial null -serial mon:stdio -nographic -kernel ./kernel8.img -gdb tcp::5678 -S
 ```
 
-Explanation: -S not starting the guest until you tell it to from gdb.  -s listening for an incoming connection from gdb on TCP port 1234
-
-**WARNING** If multiple students run the first command on the server machine, they all attempt to listen on tcp port 1234. Only one will succeed. If you see such a failure, use the second form to specify a **different** TCP port number (not necessarily 5678 which may be in use as well).
-
-```
-xzl@granger1[~]$ netstat -tulpn|grep 5678
-(Not all processes could be identified, non-owned process info
- will not be shown, you would have to be root to see it all.)
-tcp        0      0 0.0.0.0:5678            0.0.0.0:*               LISTEN      -
-tcp6       0      0 :::5678                 :::*                    LISTEN      -
-xzl@granger1[~]$ netstat -tulpn|grep 1234
-(Not all processes could be identified, non-owned process info
- will not be shown, you would have to be root to see it all.)
-tcp        2      0 0.0.0.0:1234            0.0.0.0:*               LISTEN      -
-tcp        0      0 127.0.0.1:12345         0.0.0.0:*               LISTEN      -
-tcp        0      0 127.0.0.1:12346         0.0.0.0:*               LISTEN      -
-tcp6       0      0 :::1234                 :::*                    LISTEN      -
-```
+Explanation: `-S` not starting the guest until you tell it to from gdb. `-s` listening for an incoming connection from gdb on TCP port 1234
 
 ### Launch GDB
 
 From another terminal
 
-```
-gdb-multiarch build/kernel8.elf
+```sh
+gdb build/kernel8.elf
 (gdb) target remote :1234
 (gdb) layout asm
 ```
+
+NOTE: your `gdb` command might be another one, such as `gdb-multiarch` on debian.
 
 The port number (e.g. 1234) must match what you specified for QEMU.
 
@@ -153,7 +129,7 @@ The basic GDB UI is too primitive to beginners. We provide you an enhancement ca
 
 Grab from my repository:
 
-```
+```sh
 wget -P ~ https://raw.githubusercontent.com/fxlin/gdb-dashboard-aarch64/master/.gdbinit
 ```
 
@@ -218,24 +194,18 @@ GEF screenshot (note the CPU flags it recognized)
 
 **Cannot connect and need help?** Report the following:
 
-* Your QEMU version. i.e. the output of "qemu-system-aarch64  --version"
+* Your QEMU version.
 * Have you tried other kernel binaries, e.g. from p1exp1? And the binaries provided by us? https://github.com/fxlin/p1-kernel/releases
-* The full commands you use to launch QEMU. Have you tried different port numbers?
+* The full commands you use to launch QEMU.
 * Launch GDB w/o loading .gdbinit:
 
-```
-gdb-multiarch -n
+```sh
+gdb -n
 ```
 
 Then enter GDB commands manually, e.g. load, target remote, etc. Does the problem persist? What's the output?
 
 * Attach screenshot(s) of the above steps, if possible.
-
-**WSL caveat:**
-
-"gdbserver: Target description specified unknown architecture “aarch64”
-https://stackoverflow.com/questions/53524546/gdbserver-target-description-specified-unknown-architecture-aarch64
-It seems GDB server does not play well with WSL… be aware!
 
 ## Reference
 
@@ -250,4 +220,3 @@ https://wiki.osdev.org/Kernel_Debugging
 Good article
 
 https://interrupt.memfault.com/blog/advanced-gdb#source-files
-
