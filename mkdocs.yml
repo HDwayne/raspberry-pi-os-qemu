@@ -43,5 +43,4 @@ nav:
   - /qemu: qemu.md
   - /gdb: gdb.md
   - /aarch64: aarch64-cheatsheet.md
-  - /ssh: ssh-proxy.md
-  - /ker dump: dump.md
+  - /inspect-kernel-binary: inspect-kernel-binary.md

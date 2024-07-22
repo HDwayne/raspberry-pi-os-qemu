@@ -53,11 +53,6 @@ My serial number is: 0000000000000000
 ```
 >  Note: the test program runs an infinite loop which will cause high CPU usage on your host machine. Kill the test program timely.
 
-On Linux:
 ![](test-qemu.gif)
-
-On Windows (WSL)
-
-![](test-qemu-wsl.gif)
 
 Move to [the QEMU cheatsheet](../qemu.md).
