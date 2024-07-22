@@ -28,6 +28,12 @@
               pkgs.qemu_full
             ];
           };
+
+          debugger = pkgs.mkShell {
+            buildInputs = [
+              pkgs.gdb
+            ];
+          };
         };
       }
     );
