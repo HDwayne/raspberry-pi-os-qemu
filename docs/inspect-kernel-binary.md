@@ -1,15 +1,15 @@
 # Inspect kernel binary
 
 ## Lookup source line given an address
-```
+```sh
 addr2line -e build/kernel8.elf 0x80038
 ```
 Explanation: -e specifies the ELF file with debugging info, followed by a given address
 
 ## List all symbols & addresses
 
-```
-$ nm build/kernel8.elf
+```sh
+nm build/kernel8.elf
 ```
 
 Sample output: [kernel8.nm](https://github.com/fxlin/p1-kernel/blob/master/src/lesson06/kernel8.nm)
@@ -29,7 +29,7 @@ ffff00000008105c T user_process
 
 Format: "link address" - "symbol type" - "symbol name"
 
-## Kernel disassembly 
+## Kernel disassembly
 
 ### Disassemble the whole kernel
 ```
@@ -67,13 +67,13 @@ ffff000000081074:       b9001fa0        str     w0, [x29, #28]
 
 ### Disassemble a specific address range
 
-```
+```sh
 aarch64-linux-gnu-objdump -dS build/kernel8.elf \
 --start-address=0xffff000000081000 \
---stop-address=0xffff00000008112e 
+--stop-address=0xffff00000008112e
 ```
 
-Sample output: 
+Sample output:
 
 ```
 build/kernel8.elf:     file format elf64-littleaarch64
@@ -95,7 +95,7 @@ ffff00000008100c:       790053bf        strh    wzr, [x29, #40]
 
 ### Disassemble a specific function
 
-```
+```sh
 gdb -batch -ex 'file build/kernel8.elf' -ex 'disassemble /mr loop'
 ```
 
@@ -114,12 +114,12 @@ Dump of assembler code for function loop:
 
 ## Dump a section as raw bytes
 
-```
+```sh
 aarch64-linux-gnu-objdump -s -j .rodata build/kernel8.elf
 ```
-Explanation: -j specify which elf section (.rodata in this example) to dump. 
+Explanation: -j specify which elf section (.rodata in this example) to dump.
 
-Sample output: 
+Sample output:
 
 ```
 Contents of section .rodata:                                                                                                         [0/1839] ffff0000000849a8 4b65726e 656c2070 726f6365 73732073  Kernel process s
@@ -131,42 +131,3 @@ Contents of section .rodata:                                                    
  ffff000000084a08 0a0d0000 00000000 6572726f 72207768  ........error wh
  ffff000000084a18 696c6520 73746172 74696e67 206b6572  ile starting ker
 ```
-
-## Online disassembler (ODA)
-
-https://onlinedisassembler.com/odaweb/
-
-A nice web UI for disassembling ELF files
-
-Download kernel8.elf to your local machine, if you build it on the course server. Command line users: use the  `scp` command. VSCode users: right click on kernel8.elf->Download. 
-
-![image-20210209215952569](image-20210209215952569.png)
-
-Then, upload the file to ODA.
-
-![image-20210201130120738](image-20210201130120738.png)
-*Figure above: upload file to ODA.* 
-
-------------------------------
-
-![image-20210201130221211](image-20210201130221211.png)
-*Figure above: ODA recognizes the uploaded file as ELF for aarch64.* 
-
-------------------
-
-
-![image-20210201130353802](image-20210201130353802.png)
-
-*Figure above: kernel8.elf disassembled. Top (the blue bar): a mini map of memory layout. Left: a list of symbols. Right: the list of instructions at the specified symbol.* 
-
-------------------
-
-![image-20210201130643484](image-20210201130643484.png)
-
-*Figure above: ODA shows ELF sections of kernel8.elf.* 
-
-----------------------------------
-
-![image-20210201131041671](image-20210201131041671.png)
-
-*Figure above: ODA visualizes the memory layout of IRQ vectors* 

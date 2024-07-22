@@ -53,6 +53,7 @@ Experimenting with these features is difficult with commodity kernels due to the
   * [Official Aarch64/Aarch32 address translation doc](https://developer.arm.com/documentation/100940/latest/)
 * [QEMU cheetsheet](qemu.md)
 * [Using GDB to debug kernel](gdb.md)
+* [Inspect kernel binary](inspect-kernel-binary.md)
 
 ## Experiments
 0. **Getting started**
