@@ -46,6 +46,14 @@ Experimenting with these features is difficult with commodity kernels due to the
 * Rpi3-specific hardware details. The SoC of Rpi3 is notoriously unfriendly to kernel hackers.
 * Implementation details of commodity kernels, e.g. Linux or Windows.
 
+## Documentation
+* [Aarch64 cheatsheet](aarch64-cheatsheet.md)
+  * [Official Aarch64 ISA doc](https://developer.arm.com/documentation/ddi0602/latest/)
+  * [Official Aarch64 registers doc](https://developer.arm.com/documentation/ddi0601/latest/)
+  * [Official Aarch64/Aarch32 address translation doc](https://developer.arm.com/documentation/100940/latest/)
+* [QEMU cheetsheet](qemu.md)
+* [Using GDB to debug kernel](gdb.md)
+
 ## Experiments
 0. **Getting started**
       * [Sharpen your tools!](lesson00/rpi-os.md)

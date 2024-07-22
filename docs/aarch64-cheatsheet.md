@@ -1,4 +1,4 @@
-# ARMv8 cheat sheet
+# Aarch64 cheat sheet
 
 ## General purpose registers
 
@@ -23,10 +23,6 @@ White highlight (x0-x7): parameter/results; red background (x19-x29): callee sav
 (Green reg values: the values have changed since the last instruction)
 
 ![](images/gdb-dash-aarch64-reg.png)
-
-
-
-
 
 ## Special purpose registers
 
@@ -130,7 +126,7 @@ See "Fundamentals of ARMv8-A", Chapter "Processor state"
 
 ## Common instructions
 
-[A more detailed instruction quick reference](../../arm64.pdf)
+- [A more detailed instruction quick reference](./aarch64-instr-quick-ref.pdf)
 
 * mrs	Load value from a system register to one of the general purpose registers (x0–x30)
 * and	Perform the logical AND operation.
@@ -175,6 +171,9 @@ The GNU toolchain however elected the official "aarch64" name for the port, so t
 
 This page incorporates many contents from various sources.
 
+* ARM documentation on Aarch64 ISA, https://developer.arm.com/documentation/ddi0602/latest/
+* ARM documentation on Aarch64 registers, https://developer.arm.com/documentation/ddi0601/latest/
+* ARM documentation on Aarch64/Aarch32 address translation, https://developer.arm.com/documentation/100940/latest/
 * "arm64 assembly crash course", https://github.com/Siguza/ios-resources/blob/master/bits/arm64.md
 * https://linux-sunxi.org/Arm64#ARM64_cheat_sheet
 * https://wiki.cdot.senecacollege.ca/wiki/AArch64_Register_and_Instruction_Quick_Start
