@@ -11,8 +11,6 @@ Make our tiny kernel capable of:
 
 ## Roadmap
 
-**Source code location: p1-kernel/src/lesson06**
-
 Prior to this experiment, our kernel can run and schedule user processes, but the isolation between them is not complete - all processes and the kernel itself share the same memory. This allows any process to easily access somebody else's data and even kernel data. And even if we assume that all our processes are not malicious, there is another drawback: before allocating memory each process need to know which memory regions are already occupied - this makes memory allocation for a process more complicated.
 
 We take the following steps.
@@ -145,9 +143,9 @@ As I mentioned in the previous section, each block descriptor contains a set of 
 
 **Memory attribute indirection**
 
-ARMv8 architecture introduces `mair_el1` register. See [its definition](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/mair_el1). This register consists of 8 slots, each spanning 8 bits. Each slot configures a common set of attributes. A descriptor then specifies just an index of the `mair` slot, instead of specifying all attributes directly. This allows using only 3 bits in the descriptor to reference a `mair` slot. We are using only a few of available attribute options. [Here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/arm/mmu.h#L11) is the code that prepares values for the `mair` register.
+ARMv8 architecture introduces `mair_el1` register. See [its definition](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/mair_el1). This register consists of 8 slots, each spanning 8 bits. Each slot configures a common set of attributes. A descriptor then specifies just an index of the `mair` slot, instead of specifying all attributes directly. This allows using only 3 bits in the descriptor to reference a `mair` slot. We are using only a few of available attribute options. [Here](../../src/lesson06/include/arm/mmu.h#L11) is the code that prepares values for the `mair` register.
 
-```
+```c
 /*
  * Memory region attributes:
  *
@@ -195,9 +193,9 @@ Here is a picture the memory layout. Source: Arm's document "ARMv8-A Address Tra
 
 All absolute kernel addresses must start with `0xffff...`. There are 2 places in the kernel source code shall be changed.
 
-* In the [linker script](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/linker.ld#L3) we specify base address of the image as `0xffff000000000000`. This will make the linker think that our image is going to be loaded at `0xffff000000000000` address, and therefore whenever it needs to generate an absolute address it will make it right. (There are a few more changes to the linker script, but we will discuss them later.)
+* In the [linker script](../../src/lesson06/src/linker.ld#L3) we specify base address of the image as `0xffff000000000000`. This will make the linker think that our image is going to be loaded at `0xffff000000000000` address, and therefore whenever it needs to generate an absolute address it will make it right. (There are a few more changes to the linker script, but we will discuss them later.)
 
-* We hardcode absolute kernel base addresses in the [header](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/peripherals/base.h#L7) where we define device base address. After switching on MMU, kernel has to access all IO via virtual addresses. We can map them starting from `0xffff00003F000000`. In the next section we will explore in detail the code that creates this mapping.
+* We hardcode absolute kernel base addresses in the [header](../../src/lesson06/include/peripherals/base.h#L7) where we define device base address. After switching on MMU, kernel has to access all IO via virtual addresses. We can map them starting from `0xffff00003F000000`. In the next section we will explore in detail the code that creates this mapping.
 
 ## Kernel boot: initializing kernel page tables
 
@@ -212,9 +210,9 @@ Keep this key constraint in mind. See below.
 
 -------
 
-Right after kernel switches to EL1 and clears the BSS, the kernel populates its pgtables via  [__create_page_tables](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L92) function.
+Right after kernel switches to EL1 and clears the BSS, the kernel populates its pgtables via  [__create_page_tables](../../src/lesson06/src/boot.S#L92) function.
 
-```
+```assembly
 // boot.S
 __create_page_tables:
     mov    x29, x30                        // save return address
@@ -225,7 +223,7 @@ As we know that no code will use `x29` during `__create_page_tables` execution, 
 
 > Q: What could go wrong if we push x30 to stack here?
 
-```
+```assembly
     adrp    x0, pg_dir // adrp: form PC-relative address to 4KB page
     mov    x1, #PG_DIR_SIZE
     bl     memzero
@@ -233,7 +231,7 @@ As we know that no code will use `x29` during `__create_page_tables` execution, 
 
 Next, we clear the initial page tables area. An important thing to understand here is where this area is located (x0) and how do we know its size (x1)?
 
-* Initial page tables area is defined in the [linker script](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/linker.ld#L20) - this means that we are allocating the spot for this area in the kernel image itself.
+* Initial page tables area is defined in the [linker script](../../src/lesson06/src/linker.ld#L20) - this means that we are allocating the spot for this area in the kernel image itself.
 
 * Calculating the size of this area is a little bit trickier. First, we need to understand the structure of the initial kernel page tables. We know that all our mappings are all inside 1 GB region (this is the size of RPi3 physical memory). One PGD descriptor can cover `2^39 = 512 GB`  and one PUD descriptor can cover `2^30 = 1 GB` of continuous virtual mapping area. (Those values are calculated based on the PGD and PUD indexes location in the virtual address.) This means that we need just one PGD and one PUD to map the whole RPi memory, and even more - both PGD and PUD will contain a single descriptor (of course we still need to allocate at least one page for them each). If we have a single PUD entry there also must be a single PMD table, to which this entry will point. (Single PMD entry covers 2 MB, there are 512 items in a PMD, so in total the whole PMD table covers the same 1 GB of memory that is covered by a single PUD descriptor.)
   Next, we know that we need to map 1 GB region of memory, which is a multiple of 2 MB. This allows us to keep things simple -- using section mapping. This means that we don't need PTE at all. So in total, we need 3 pages: one for PGD, PUD and PMD - this is precisely the size of the initial page table area.
@@ -243,11 +241,11 @@ Next, we clear the initial page tables area. An important thing to understand he
 
 ### Allocating & installing a new pgtable
 
-Now we are going to step outside `__create_page_tables` function and take a look on 2 essential macros: [create_table_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L68) and [create_block_map](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L77).
+Now we are going to step outside `__create_page_tables` function and take a look on 2 essential macros: [create_table_entry](../../src/lesson06/src/boot.S#L68) and [create_block_map](../../src/lesson06/src/boot.S#L77).
 
 `create_table_entry` is responsible for allocating a new page table (In our case either PGD or PUD) The source code is listed below.
 
-```
+```assembly
     .macro    create_table_entry, tbl, virt, shift, tmp1, tmp2
     lsr    \tmp1, \virt, #\shift
     and    \tmp1, \tmp1, #PTRS_PER_TABLE - 1            // table index
@@ -267,7 +265,7 @@ This macro accepts the following arguments.
 
 This macro is very important, so we are going to spend some time understanding it.
 
-```
+```assembly
     lsr    \tmp1, \virt, #\shift
     and    \tmp1, \tmp1, #PTRS_PER_TABLE - 1            // table index
 ```
@@ -276,7 +274,7 @@ The first two lines of the macro are responsible for extracting table index from
 
 -------------------------
 
-```
+```assembly
     add    \tmp2, \tbl, #PAGE_SIZE
 ```
 
@@ -284,7 +282,7 @@ Then the address of the next page table is calculated. Here we are using the con
 
 ----------------------------------------
 
-```
+```assembly
     orr    \tmp2, \tmp2, #MM_TYPE_PAGE_TABLE
 ```
 
@@ -292,7 +290,7 @@ Next, a pointer to the next page table in the hierarchy is converted to a table 
 
 -----------------------------
 
-```
+```assembly
     str    \tmp2, [\tbl, \tmp1, lsl #3]
 ```
 
@@ -300,17 +298,17 @@ Then the descriptor is stored in the current page table. We use previously calcu
 
 ---------------------
 
-```
+```assembly
     add    \tbl, \tbl, #PAGE_SIZE                    // next level table page
 ```
 
-Finally, we change `tbl` parameter to point to the next page table in the hierarchy. This is convenient because now we can call `create_table_entry` one more time for the next table in the hierarchy without making any adjustments to the `tbl` parameter. This is precisely what we are doing in the [create_pgd_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/boot.S#L63) macro, which is just a wrapper that allocates both PGD and PUD.
+Finally, we change `tbl` parameter to point to the next page table in the hierarchy. This is convenient because now we can call `create_table_entry` one more time for the next table in the hierarchy without making any adjustments to the `tbl` parameter. This is precisely what we are doing in the [create_pgd_entry](../../src/lesson06/src/boot.S#L113) macro, which is just a wrapper that allocates both PGD and PUD.
 
 ### Populating a PMD table
 
 Next important macro is`create_block_map`. As you might guess this macro is responsible for populating entries of the PMD table. It looks like the following.
 
-```
+```assembly
     .macro    create_block_map, tbl, phys, start, end, flags, tmp1
     lsr    \start, \start, #SECTION_SHIFT
     and    \start, \start, #PTRS_PER_TABLE - 1            // table index
@@ -338,7 +336,7 @@ Parameters here are a little bit different.
 
 Now, let's examine the source.
 
-```
+```assembly
     lsr    \start, \start, #SECTION_SHIFT
     and    \start, \start, #PTRS_PER_TABLE - 1            // table index
 ```
@@ -347,7 +345,7 @@ Those 2 lines extract the table index from `start` virtual address. This is done
 
 ----------------------------
 
-```
+```assembly
     lsr    \end, \end, #SECTION_SHIFT
     and    \end, \end, #PTRS_PER_TABLE - 1                // table end index
 ```
@@ -356,7 +354,7 @@ The same thing is repeated for the `end` address. Now both `start` and `end` con
 
 ----------------------------
 
-```
+```assembly
     lsr    \phys, \phys, #SECTION_SHIFT
     mov    \tmp1, #\flags
     orr    \phys, \tmp1, \phys, lsl #SECTION_SHIFT            // table entry
@@ -366,7 +364,7 @@ Next, block descriptor is prepared and stored in the `tmp1` variable. In order t
 
 ----------------------------
 
-```
+```assembly
 9999:    str    \phys, [\tbl, \start, lsl #3]                // store the entry
     add    \start, \start, #1                    // next entry
     add    \phys, \phys, #SECTION_SIZE                // next block
@@ -378,17 +376,17 @@ The final part of the function is executed inside a loop. Here we first store cu
 
 ----------------------------
 
-### Putting it together: __create_page_tables()
+### Putting it together: `__create_page_tables()`
 
 Now, when you understand how `create_table_entry` and `create_block_map` macros work, it will be straightforward to understand the rest of the `__create_page_tables` function.
 
-```
+```assembly
     adrp    x0, pg_dir
     mov    x1, #VA_START
     create_pgd_entry x0, x1, x2, x3
 ```
 
-Here we create both PGD and PUD. We configure them to start mapping from [VA_START](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/mm.h#L6) virtual address. Because of the semantics of the `create_table_entry` macro, after `create_pgd_entry`  finishes `x0` will contain the address of the next table in the hierarchy - namely PMD.
+Here we create both PGD and PUD. We configure them to start mapping from [VA_START](../../src/lesson06/include/mm.h#L6) virtual address. Because of the semantics of the `create_table_entry` macro, after `create_pgd_entry`  finishes `x0` will contain the address of the next table in the hierarchy - namely PMD.
 
 --------------------
 
@@ -400,11 +398,11 @@ Here we create both PGD and PUD. We configure them to start mapping from [VA_STA
     create_block_map x0, x1, x2, x3, MMU_FLAGS, x4
 ```
 
-Next, we create virtual mapping of the whole memory, excluding device registers region. We use [MMU_FLAGS](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/arm/mmu.h#L24) constant as `flags` parameter - this marks all sections to be mapped as normal noncacheable memory. (Note, that `MM_ACCESS` flag is also specified as part of `MMU_FLAGS` constant. Without this flag each memory access will generate a synchronous exception.)
+Next, we create virtual mapping of the whole memory, excluding device registers region. We use [MMU_FLAGS](../../src/lesson06/include/arm/mmu.h#L24) constant as `flags` parameter - this marks all sections to be mapped as normal noncacheable memory. (Note, that `MM_ACCESS` flag is also specified as part of `MMU_FLAGS` constant. Without this flag each memory access will generate a synchronous exception.)
 
 --------------------
 
-```
+```assembly
     /* Mapping device memory*/
     mov     x1, #DEVICE_BASE                    // start mapping from device base address
     ldr     x2, =(VA_START + DEVICE_BASE)                // first virtual address
@@ -416,7 +414,7 @@ Then device registers region is mapped. This is done exactly in the same way as 
 
 --------------------
 
-```
+```assembly
     mov    x30, x29                        // restore return address
     ret
 ```
@@ -427,7 +425,7 @@ Finally, the function restored link register and returns to the caller.
 
 Now page tables are created and we are back to the `el1_entry` function. But there is still some work to be done before we can switch on the MMU.
 
-```
+```assembly
     mov    x0, #VA_START
     add    sp, x0, #LOW_MEMORY
 ```
@@ -436,7 +434,7 @@ We are updating init task stack pointer. Now it uses a virtual address, instead 
 
 -----------------------------
 
-```
+```assembly
     adrp    x0, pg_dir
     msr    ttbr1_el1, x0
 ```
@@ -447,7 +445,7 @@ We are updating init task stack pointer. Now it uses a virtual address, instead 
 >
 ----------------------
 
-```
+```assembly
     ldr    x0, =(TCR_VALUE)
     msr    tcr_el1, x0
 ```
@@ -456,7 +454,7 @@ We are updating init task stack pointer. Now it uses a virtual address, instead 
 
 -------------------------
 
-```
+```assembly
     ldr    x0, =(MAIR_VALUE)
     msr    mair_el1, x0
 ```
@@ -465,7 +463,7 @@ We already discussed `mair` register in the "Configuring page attributes" sectio
 
 -------------------------
 
-```
+```assembly
     ldr    x2, =kernel_main
 
     mov    x0, #SCTLR_MMU_ENABLED
@@ -511,14 +509,14 @@ This assumption can't go a long way. The right solution would be linking user pr
 
 Right now there are 2 files that are compiled in the user region.
 
-* [user_sys.S](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/user_sys.S) This file contains definitions of the syscall wrapper functions. The RPi OS still supports the same syscalls as in the previous lesson, with the exception that now instead of `clone` syscall we are going to use `fork` syscall. The difference is that `fork` copies process virtual memory, and that is something we want to try doing.
-* [user.c](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/user.c) User program source code. Almost the same as we've used in the previous lesson.
+* [user_sys.S](../../src/lesson06/src/user_sys.S) This file contains definitions of the syscall wrapper functions. The RPi OS still supports the same syscalls as in the previous lesson, with the exception that now instead of `clone` syscall we are going to use `fork` syscall. The difference is that `fork` copies process virtual memory, and that is something we want to try doing.
+* [user.c](../../src/lesson06/src/user.c) User program source code. Almost the same as we've used in the previous lesson.
 
 ## Creating first user process
 
-As it was the case in the previous lesson, [move_to_user_mode](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/fork.c#L44) function is responsible for creating the first user process. We call this function from a kernel thread. Here is how we do this.
+As it was the case in the previous lesson, [move_to_user_mode](../../src/lesson06/src/fork.c#L44) function is responsible for creating the first user process. We call this function from a kernel thread. Here is how we do this.
 
-```
+```c
 void kernel_process(){
     printf("Kernel process started. EL %d\r\n", get_el());
     unsigned long begin = (unsigned long)&user_begin;
@@ -537,7 +535,7 @@ Now we need 3 arguments to call `move_to_user_mode`: a pointer to the beginning 
 
 `move_to_user_mode` function is listed below.
 
-```
+```c
 int move_to_user_mode(unsigned long start, unsigned long size, unsigned long pc)
 {
     struct pt_regs *regs = task_pt_regs(current);
@@ -556,25 +554,25 @@ int move_to_user_mode(unsigned long start, unsigned long size, unsigned long pc)
 
 Now let's try to inspect in details what is going on here.
 
-```
+```c
     struct pt_regs *regs = task_pt_regs(current);
 ```
 
 As it was the case in the previous lesson, we obtain a pointer to `pt_regs` area and set `pstate`, so that after `kernel_exit` we will end up in EL0.
 
-```
+```c
     regs->pc = pc;
 ```
 
 `pc` now points to the offset of the startup function in the user region.
 
-```
+```c
     regs->sp = 2 *  PAGE_SIZE;
 ```
 
 We made a simple convention that our user program will not exceed 1 page in size. We allocate the second page to the stack.
 
-```
+```c
     unsigned long code_page = allocate_user_page(current, 0);
     if (code_page == 0)    {
         return -1;
@@ -583,17 +581,17 @@ We made a simple convention that our user program will not exceed 1 page in size
 
 `allocate_user_page` *reserves* 1  memory page and maps it to the virtual address, provided as a second argument. In the process of mapping it populates page tables, associated with the current process. We will investigate in details how this function works later in this chapter.
 
-```
+```c
     memcpy(code_page, start, size);
 ```
 
 Next, we are going to copy the whole user region to the new address space (in the page that we have just mapped), starting from offset 0, so the offset in the user region will become an actual virtual address of the starting point.
 
-```
+```c
     set_pgd(current->mm.pgd);
 ```
 
-Finally, we call [set_pgd](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/utils.S#L24), which updates `ttbr0_el1` register and thus activates the current process translation tables.
+Finally, we call [set_pgd](../../src/lesson06/src/utils.S#L24), which updates `ttbr0_el1` register and thus activates the current process translation tables.
 
 ### Aside: TLB
 
@@ -603,9 +601,9 @@ Usually, we try to avoid using all caches for simplicity, but without TLB any me
 
 ### Mapping a virtual page to user
 
-We have seen previously how [allocate_user_page](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L14) function is used - now it is time to see what is inside it.
+We have seen previously how [allocate_user_page](../../src/lesson06/src/mm.c#L17) function is used - now it is time to see what is inside it.
 
-```
+```c
 unsigned long allocate_user_page(struct task_struct *task, unsigned long va) {
     unsigned long page = get_free_page();
     if (page == 0) {
@@ -622,9 +620,9 @@ In our case `page` variable is a physical pointer (note its "unsigned long" type
 
 --------------------------------
 
-User mapping is still required to be created and this happens in the [map_page](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L62) function, which we will explore next.
+User mapping is still required to be created and this happens in the [map_page](../../src/lesson06/src/mm.c#L87) function, which we will explore next.
 
-```
+```c
 void map_page(struct task_struct *task, unsigned long va, unsigned long page){
     unsigned long pgd;
     if (!task->mm.pgd) {
@@ -655,11 +653,11 @@ void map_page(struct task_struct *task, unsigned long va, unsigned long page){
 
 ------------------------
 
-There are 2 important functions involved in the process:  [map_table](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L47) and [map_table_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L40).
+There are 2 important functions involved in the process:  [map_table](../../src/lesson06/src/mm.c#L68) and [map_table_entry](../../src/lesson06/src/mm.c#L49).
 
 `map_table` is listed below.
 
-```
+```c
 unsigned long map_table(unsigned long *table, unsigned long shift, unsigned long va, int* new_table) {
     unsigned long index = va >> shift;
     index = index & (PTRS_PER_TABLE - 1);
@@ -687,7 +685,7 @@ You can think of this function as an analog of the `create_table_entry` macro. I
 
 `map_page` calls `map_table` 3 times: once for PGD, PUD and PMD. The last call allocates PTE and sets a descriptor in the PMD. Next, `map_table_entry` is called. You can see this function below.
 
-```
+```c
 void map_table_entry(unsigned long *pte, unsigned long va, unsigned long pa) {
     unsigned long index = va >> PAGE_SHIFT;
     index = index & (PTRS_PER_TABLE - 1);
@@ -700,13 +698,13 @@ void map_table_entry(unsigned long *pte, unsigned long va, unsigned long pa) {
 
 `map_table_entry` extracts PTE index from the virtual address and then prepares and sets PTE descriptor. It is similar to what we've been doing in the `create_block_map` macro.
 
-That's it about user page tables allocation, but `map_page` is responsible for one more important role: it keeps track of the pages that have been allocated during the process of virtual address mapping. All such pages are stored in the [kernel_pages](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/sched.h#L53) array. We need this array to be able to clean up allocated pages after a task exits. There is also [user_pages](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/sched.h#L51) array, which is also populated by the `map_page` function. This array store information about the correspondence between process virtual pages any physical pages. We need this information in order to be able to copy process virtual memory during `fork` (More on this later).
+That's it about user page tables allocation, but `map_page` is responsible for one more important role: it keeps track of the pages that have been allocated during the process of virtual address mapping. All such pages are stored in the [kernel_pages](../../src/lesson06/include/sched.h#L53) array. We need this array to be able to clean up allocated pages after a task exits. There is also [user_pages](../../src/lesson06/include/sched.h#L51) array, which is also populated by the `map_page` function. This array store information about the correspondence between process virtual pages any physical pages. We need this information in order to be able to copy process virtual memory during `fork` (More on this later).
 
 ## Forking a user process
 
 Let's summarize where we are so far: we've seen how first user process is created, its page tables populated, code & data copied to the proper location and stack initialized. After all of this preparation, the process is ready to run. The code that is executed inside user process is listed below.
 
-```
+```c
 void loop(char* str)
 {
     char buf[2] = {""};
@@ -738,13 +736,13 @@ void user_process()
 
 ### The familiar fork() semantics
 
-The code itself is very simple as we expect. Unlike `clone`, when doing `fork` we don't need to provide the function that needs to be executed in a new process. Also, the [fork wrapper function](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/user_sys.S#L26) is much easier than the `clone` one. All of this is possible because of the fact that `fork` make a full copy of the process virtual address space, so the fork wrapper function return twice: one time in the original process and one time in the new one. At this point, we have two identical processes, with identical stacks and `pc` positions. The only difference is the return value of the `fork` syscall: it returns child PID in the parent process and 0 in the child process. Starting from this point both processes begin completely independent life and can modify their stacks and write different things using same addresses in memory - all of this without affecting one another.
+The code itself is very simple as we expect. Unlike `clone`, when doing `fork` we don't need to provide the function that needs to be executed in a new process. Also, the [fork wrapper function](../../src/lesson06/src/user_sys.S#L26) is much easier than the `clone` one. All of this is possible because of the fact that `fork` make a full copy of the process virtual address space, so the fork wrapper function return twice: one time in the original process and one time in the new one. At this point, we have two identical processes, with identical stacks and `pc` positions. The only difference is the return value of the `fork` syscall: it returns child PID in the parent process and 0 in the child process. Starting from this point both processes begin completely independent life and can modify their stacks and write different things using same addresses in memory - all of this without affecting one another.
 
 ### Implementation
 
-Now let's see how `fork` system call is implemented. [copy_process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/fork.c#L7) function does most of the job.
+Now let's see how `fork` system call is implemented. [copy_process](../../src/lesson06/src/fork.c#L7) function does most of the job.
 
-```
+```c
 int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg)
 {
     preempt_disable();
@@ -782,9 +780,9 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg)
 }
 ```
 
-This function looks almost exactly the same as in the previous lesson with one exception: when copying user processes, now, instead of modifying new process stack pointer and program counter, we instead call [copy_virt_memory](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L87). `copy_virt_memory` looks like this.
+This function looks almost exactly the same as in the previous lesson with one exception: when copying user processes, now, instead of modifying new process stack pointer and program counter, we instead call [copy_virt_memory](../../src/lesson06/src/mm.c#L117). `copy_virt_memory` looks like this.
 
-```
+```c
 int copy_virt_memory(struct task_struct *dst) {
     struct task_struct* src = current;
     for (int i = 0; i < src->mm.user_pages_count; i++) {
@@ -814,7 +812,7 @@ If you go back and take a look at the `move_to_user_mode` function, you may noti
 
 When a process tries to access some address which belongs to the page that is not yet mapped, a synchronous exception is generated. This is the second type of synchronous exception that we are going to support (the first type is an exception generated by the `svc` instruction which is a system call). Synchronous exception handler now looks like the following.
 
-```
+```assembly
 el0_sync:
     kernel_entry 0
     mrs    x25, esr_el1                // read the syndrome register
@@ -828,7 +826,7 @@ el0_sync:
 
 Here we use `esr_el1` register to determine exception type. If it is a page fault exception (or, which is the same, data access exception) `el0_da` function is called.
 
-```
+```assembly
 el0_da:
     bl    enable_irq
     mrs    x0, far_el1
@@ -842,7 +840,7 @@ el0_da:
     kernel_exit 0
 ```
 
-`el0_da` redirects the main work to the [do_mem_abort](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/mm.c#L101) function. This function takes two arguments
+`el0_da` redirects the main work to the [do_mem_abort](../../src/lesson06/src/mm.c#L131) function. This function takes two arguments
 1. The memory address which we tried to access. This address is taken from `far_el1`  register (Fault address register)
 1. The content of the `esr_el1` (Exception syndrome register)
 
@@ -850,7 +848,7 @@ el0_da:
 
 `do_mem_abort` is listed below.
 
-```
+```c
 int do_mem_abort(unsigned long addr, unsigned long esr) {
     unsigned long dfs = (esr & 0b111111);
     if ((dfs & 0b111100) == 0b100) {
