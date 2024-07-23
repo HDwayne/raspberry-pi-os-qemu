@@ -319,7 +319,7 @@ If you experience the same thing, you should omit the spurious interrupt.
 
 The CNTPCT_EL0 system register reports the current system count value.
 
-> CNTFRQ_EL0reports the frequency of the system count. However, this register is not populated by hardware. The register is write-able at the highest implemented Exception level and readable at all Exception levels. Firmware, typically running at EL3, populates this register as part of early system initialization. Higher-level software, like an operating system, can then use the register to get the frequency.
+> CNTFRQ_EL0 reports the frequency of the system count. However, this register is not populated by hardware. The register is write-able at the highest implemented Exception level and readable at all Exception levels. Firmware, typically running at EL3, populates this register as part of early system initialization. Higher-level software, like an operating system, can then use the register to get the frequency.
 
 #### Turn on timer interrupt at the CPU core
 
