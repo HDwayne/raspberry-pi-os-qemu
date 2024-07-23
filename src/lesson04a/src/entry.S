@@ -59,7 +59,7 @@
  * Exception vectors.
  */
 .align	11
-.globl vectors 
+.globl vectors
 vectors:
 	ventry	sync_invalid_el1t			// Synchronous EL1t
 	ventry	irq_invalid_el1t			// IRQ EL1t
@@ -127,20 +127,20 @@ error_invalid_el0_32:
 	handle_invalid_entry  ERROR_INVALID_EL0_32
 
 el1_irq:
-	kernel_entry 
+	kernel_entry
 	bl	handle_irq
-	kernel_exit 
+	kernel_exit
 
 .globl ret_from_fork
-// the **first** piece of code executed by a newly created process. 
+// the **first** piece of code executed by a newly created process.
 // only executed once throughout a task's lifetime
 // NB: despite the name "fork", we are not doing fork() as in Linux/Unix
 ret_from_fork:
 	bl	schedule_tail
-	// Explanation: 
-	// copy_process() saves `fn` (the process's main function) and `arg` (the argument passed to the process) 
-	// to`task_struct.x19` and `x20`. When switching to a new task, the kernel restores `fn` and `arg` from `task_struct` 
-	// to `x19` and `x20`. 
+	// Explanation:
+	// copy_process() saves `fn` (the process's main function) and `arg` (the argument passed to the process)
+	// to`task_struct.x19` and `x20`. When switching to a new task, the kernel restores `fn` and `arg` from `task_struct`
+	// to `x19` and `x20`.
 	// Below, `ret_from_fork` calls the function stored in `x19` register with the argument stored in `x20`.
 	mov	x0, x20
 	blr	x19 		//should never return

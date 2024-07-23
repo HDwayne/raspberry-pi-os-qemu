@@ -11,6 +11,6 @@ void handle_generic_timer_irq ( void );
 
 extern void gen_timer_init();
 /* set timer to be fired after @interval System ticks */
-extern void gen_timer_reset(int interval); 
+extern void gen_timer_reset(int interval);
 
 #endif  /*_TIMER_H */
