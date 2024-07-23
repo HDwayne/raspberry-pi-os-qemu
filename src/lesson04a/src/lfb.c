@@ -37,11 +37,11 @@ static unsigned int height = 768;
 static unsigned int vwidth = 1024;
 static unsigned int vheight = 768;
 
-static unsigned int pitch;
-static unsigned int isrgb;
+static unsigned int pitch; 
+static unsigned int isrgb; 
 
-static unsigned int offsetx = 0;
-static unsigned int offsety = 0;
+static unsigned int offsetx = 0; 
+static unsigned int offsety = 0; 
 
 /* PC Screen Font as used by Linux Console */
 typedef struct {
@@ -130,7 +130,7 @@ void lfb_init()
         height=mbox[6];
         pitch=mbox[33];
         vwidth=mbox[10];
-        vheight=mbox[11];
+        vheight=mbox[11];        
         isrgb=mbox[24];         //get the actual channel order
         lfb=(void*)((unsigned long)mbox[28]);
     } else {
@@ -288,7 +288,7 @@ void lfb_proprint(int x, int y, char *s)
 #endif
 
 
-#define IMG_DATA img_data
+#define IMG_DATA img_data      
 #define IMG_HEIGHT img_height
 #define IMG_WIDTH img_width
 
@@ -298,13 +298,13 @@ void lfb_showpicture()
     unsigned char *ptr=lfb;
     char *data=IMG_DATA, pixel[4];
     // fill framebuf. crop img data per the framebuf size
-    unsigned int img_fb_height = vheight < IMG_HEIGHT ? vheight : IMG_HEIGHT;
-    unsigned int img_fb_width = vwidth < IMG_WIDTH ? vwidth : IMG_WIDTH;
+    unsigned int img_fb_height = vheight < IMG_HEIGHT ? vheight : IMG_HEIGHT; 
+    unsigned int img_fb_width = vwidth < IMG_WIDTH ? vwidth : IMG_WIDTH; 
 
-    // xzl: copy the image pixels to the start (top) of framebuf
-    //ptr += (vheight-img_fb_height)/2*pitch + (vwidth-img_fb_width)*2;
-    ptr += (vwidth-img_fb_width)*2;
-
+    // xzl: copy the image pixels to the start (top) of framebuf    
+    //ptr += (vheight-img_fb_height)/2*pitch + (vwidth-img_fb_width)*2;  
+    ptr += (vwidth-img_fb_width)*2;  
+    
     for(y=0;y<img_fb_height;y++) {
         for(x=0;x<img_fb_width;x++) {
             HEADER_PIXEL(data, pixel);

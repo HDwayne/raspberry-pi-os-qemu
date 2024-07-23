@@ -1,4 +1,4 @@
-/*  GIMP header image file format (RGB): Y:\teaching\p1-kernel-workspace\p1-kernel\src\lesson04a\include\rev_uva_logo_color3-resized.h  */
+/*  GIMP header image file format (RGB): Y:\teaching\p1-kernel-workspace\p1-kernel\src\exp4a\include\rev_uva_logo_color3-resized.h  */
 
 static unsigned int img_width = 1024;
 static unsigned int img_height = 250;
