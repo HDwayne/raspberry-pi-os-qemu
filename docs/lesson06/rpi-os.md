@@ -135,8 +135,6 @@ An item in a page table is called "descriptor". A description has a special form
 * **Bits [47:12]**. This is the place where the address that a descriptor points to is stored. As I mentioned previously, only bits [47:12] of the address need to be stored, because all other bits are always 0.
 * **Bits [63:48]** Another set of attributes.
 
-See [Arm's official page](https://armv8-ref.codingbelief.com/en/chapter_d4/d43_3_memory_attribute_fields_in_the_vmsav8-64_translation_table_formats_descriptors.html#).
-
 ### Configuring page attributes
 
 As I mentioned in the previous section, each block descriptor contains a set of attributes (called MemAttr, bits[5:2]) that controls various virtual page parameters, notably cacheability or shareability. However, the attributes that are most important for our discussion are NOT encoded in the descriptor. Instead, ARM processors implement a trick for compressing descriptor attributes commonly used. (The days of simpler ARM hardware were gone)
@@ -210,7 +208,7 @@ Keep this key constraint in mind. See below.
 
 -------
 
-Right after kernel switches to EL1 and clears the BSS, the kernel populates its pgtables via  [__create_page_tables](../../src/lesson06/src/boot.S#L92) function.
+Right after kernel switches to EL1 and clears the BSS, the kernel populates its pgtables via  [__create_page_tables](../../src/lesson06/src/boot.S#L180) function.
 
 ```assembly
 // boot.S
@@ -241,7 +239,7 @@ Next, we clear the initial page tables area. An important thing to understand he
 
 ### Allocating & installing a new pgtable
 
-Now we are going to step outside `__create_page_tables` function and take a look on 2 essential macros: [create_table_entry](../../src/lesson06/src/boot.S#L68) and [create_block_map](../../src/lesson06/src/boot.S#L77).
+Now we are going to step outside `__create_page_tables` function and take a look on 2 essential macros: [create_table_entry](../../src/lesson06/src/boot.S#L129) and [create_block_map](../../src/lesson06/src/boot.S#L144).
 
 `create_table_entry` is responsible for allocating a new page table (In our case either PGD or PUD) The source code is listed below.
 
@@ -481,7 +479,7 @@ An interesting question is why can't we just execute `br kernel_main` instructio
 
 `ldr x2, =kernel_main` does not suffer from the problem. CPU loads `x2` with the link address of `kernel_main`, e.g. 0xffff000000003190. Different from `br kernel_main` which uses PC-based offset, `br x2` jumps to an absolute address stored in x2 (this is called long jmp). Therefore, PC will be updated with the link address of `kernel_main` which can be translated via MMU. In other words, by executing a long jmp, we "synchronize" the PC value with virtual addresses.
 
-Another question: why `ldr x2, =kernel_main` itself must be executed before we turn on the MMU? The reason is that `ldr` also uses `pc` relative offset.  See the [manual](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802b/LDR_reg_gen.html). On my build, it emitted as `ldr x2, #0x10c`. So if we execute this instruction *after* MMU is on but *before* we "synchronize" PC, MMU will give another translation fault.
+Another question: why `ldr x2, =kernel_main` itself must be executed before we turn on the MMU? The reason is that `ldr` also uses `pc` relative offset. On my build, it emitted as `ldr x2, #0x10c`. So if we execute this instruction *after* MMU is on but *before* we "synchronize" PC, MMU will give another translation fault.
 
 ## Compiling & loading user programs
 
@@ -514,7 +512,7 @@ Right now there are 2 files that are compiled in the user region.
 
 ## Creating first user process
 
-As it was the case in the previous lesson, [move_to_user_mode](../../src/lesson06/src/fork.c#L44) function is responsible for creating the first user process. We call this function from a kernel thread. Here is how we do this.
+As it was the case in the previous lesson, [move_to_user_mode](../../src/lesson06/src/fork.c#L49) function is responsible for creating the first user process. We call this function from a kernel thread. Here is how we do this.
 
 ```c
 void kernel_process(){
@@ -698,7 +696,7 @@ void map_table_entry(unsigned long *pte, unsigned long va, unsigned long pa) {
 
 `map_table_entry` extracts PTE index from the virtual address and then prepares and sets PTE descriptor. It is similar to what we've been doing in the `create_block_map` macro.
 
-That's it about user page tables allocation, but `map_page` is responsible for one more important role: it keeps track of the pages that have been allocated during the process of virtual address mapping. All such pages are stored in the [kernel_pages](../../src/lesson06/include/sched.h#L53) array. We need this array to be able to clean up allocated pages after a task exits. There is also [user_pages](../../src/lesson06/include/sched.h#L51) array, which is also populated by the `map_page` function. This array store information about the correspondence between process virtual pages any physical pages. We need this information in order to be able to copy process virtual memory during `fork` (More on this later).
+That's it about user page tables allocation, but `map_page` is responsible for one more important role: it keeps track of the pages that have been allocated during the process of virtual address mapping. All such pages are stored in the [kernel_pages](../../src/lesson06/include/sched.h#L55) array. We need this array to be able to clean up allocated pages after a task exits. There is also [user_pages](../../src/lesson06/include/sched.h#L51) array, which is also populated by the `map_page` function. This array store information about the correspondence between process virtual pages any physical pages. We need this information in order to be able to copy process virtual memory during `fork` (More on this later).
 
 ## Forking a user process
 
