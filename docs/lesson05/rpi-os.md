@@ -183,7 +183,7 @@ thread_start:
     svc    0x0
 ```
 
-The `clone` wrapper above mimics the [coresponding function](https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/unix/sysv/linux/aarch64/clone.S;h=e0653048259dd9a3d3eb3103ec2ae86acb43ef48;hb=HEAD#l35) from in the `glibc` library.
+The `clone` wrapper above mimics the [coresponding function](https://github.com/bminor/glibc/blob/b0fbcb7d0051a68baf26b2aed51a8a31c34d68e5/sysdeps/unix/sysv/linux/aarch64/clone.S#L35) from in the `glibc` library.
 
 1. x0-x3 contain syscall arguments. They are intended for the child task. Save fn and arg to x10-x11. Why? The kernel syscall handler `el0_svc` does not preserve x0-x3. The new task will pick up x10 and x11 in `thread_start`.
 1. Save the pointer to the new task's stack in x2, as expected by `sys_clone(unsigned long stack)`.
@@ -191,7 +191,7 @@ The `clone` wrapper above mimics the [coresponding function](https://sourceware.
 1. Upon returning from syscall, checks return value in x0:
    * if 0, we are executing inside the child task. In this case, execution goes to `thread_start` label.
    * If not 0, we are executing in the parent task. x0 is the PID of the child task.
-1. thread_start executes in the new task with the give entry function (x10) and the arg to the function (x11). Note x29 (FP) is cleared for correct stack unwinding at the user level. See [here](../../docs/lesson03/linux/low_level-exception_handling.md).
+1. thread_start executes in the new task with the give entry function (x10) and the arg to the function (x11). Note x29 (FP) is cleared for correct stack unwinding at the user level.
 1. After the function finishes, `exit` syscall is performed — it never returns.
 
 #### Implementing clone in kernel
@@ -268,7 +268,7 @@ First create a process (i.e. a task) as we did before. This is a "kernel" proces
 int res = copy_process(PF_KTHREAD, (unsigned long)&kernel_process, 0, 0);
 ```
 
-The kernel process invokes [move_to_user_mode()](../../src/lesson05/src/fork.c#Li47), passing a function pointer to the `user_process` as the first argument.
+The kernel process invokes [move_to_user_mode](../../src/lesson05/src/fork.c#L47), passing a function pointer to the `user_process` as the first argument.
 
 ```c
 void kernel_process() {
