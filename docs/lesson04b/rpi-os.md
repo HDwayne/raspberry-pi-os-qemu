@@ -10,8 +10,6 @@ A minimum kernel that can schedule multiple tasks in a preemptive fashion. With 
 2. Understand context switch driven by interrupts, in particular switch to/from interrupt handlers
 3. Atomic kernel regions where preemption is disallowed
 
-**Source code location: p1-kernel/src/lesson04b**
-
 ## Roadmap
 
 We will turn on timer interrupts. In the interrupt handler, our kernel invokes its scheduler to switch among runnable tasks.
@@ -24,7 +22,7 @@ In addition to `switch_to`, the kernel should save & restore CPU state upon ente
 
 We turn on timer interrupts in `kernel_main`.
 
-```
+```c
 void kernel_main(void) {
     uart_init();
     init_printf(0, putc);
@@ -38,7 +36,7 @@ void kernel_main(void) {
 
 With that, tasks no longer need to call schedule() voluntarily.
 
-```
+```c
 void process(char *array)
 {
     while (1){
@@ -60,7 +58,7 @@ With preemptive scheduling, schedule() are called in two places.
 
 Look at `timer_tick()`, which is called from the timer interrupt.
 
-```
+```c
 void timer_tick()
 {
     --current->counter;
@@ -211,7 +209,7 @@ To disable preemption, one method is to disable interrupts. Beyond that, the ker
 
 To `task_struct`, we add:
 
-```
+```c
 struct task_struct {
     struct cpu_context cpu_context;
     long state;
@@ -223,14 +221,14 @@ struct task_struct {
 
 `preempt_count` >0  indicates that right now the current task is non-preemptable. The following two functions operate on it:
 
-```
+```c
 void preempt_disable(void) { current->preempt_count++;}
 void preempt_enable(void) { current->preempt_count--;}
 ```
 
 Seeing this flag, the kernel will not invoke scheduler() at all, let alone descheduling this task (i.e. switching to a different task). This is done via the following code.
 
-```
+```c
 void timer_tick() {
 	if (current->counter>0 || current->preempt_count >0)
 		return;
@@ -245,7 +243,7 @@ Why a count instead of a binary flag? This again mimics the Linux implementation
 
 Going back to making `copy_process` atomic:
 
-```
+```c
 int copy_process(unsigned long fn, unsigned long arg)
 {
     preempt_disable(); /* new addition */
@@ -272,7 +270,7 @@ int copy_process(unsigned long fn, unsigned long arg)
 
 `preempt_count` is set to 1, preventing the new task, once it starts to execute, from being preempted until it completes some initialization work. After that, the new task executes `ret_from_fork`, which calls `schedule_tail()` which will call `preempt_enable()`
 
-```
+```assembly
 // entry.S
 .globl ret_from_fork
 ret_from_fork:
@@ -286,7 +284,7 @@ ret_from_fork:
 
 The scheduler is [non-reentrant](https://en.wikipedia.org/wiki/Reentrancy_(computing)). Making it atomic looks easy: we just call `preempt_disable/enable()` upon entering/leaving the scheduler.
 
-```
+```c
 void _schedule(void)
 {
     preempt_disable(); /* new addition */
@@ -326,7 +324,6 @@ This actually explains why interrupts must be enabled during `schedule` executio
 Note: our kernel does not (yet) have the mechanism for tasks to wait for interrupts. It's a important mechanism to be added.
 
 > I am not very satisfied with leaving interrupt on during schedule(). There shall be an idle task which does `WFI` when no other tasks are runnable. In that way, the scheduler can avoid spinning and can run with interrupt off. To implement the idle task, the kernel shall implement task wait state.
->
 
 ## Conclusion
 
