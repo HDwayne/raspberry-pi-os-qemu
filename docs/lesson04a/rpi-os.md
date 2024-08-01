@@ -28,7 +28,7 @@ This experiment focuses on scheduling and task switch. Tasks must voluntarily yi
 
 A struct describing a task. Its name comes from the Linux kernel (again). The code is as follows (`sched.h`).
 
-```
+```c
 struct cpu_context {
     unsigned long x19;
     unsigned long x20;
