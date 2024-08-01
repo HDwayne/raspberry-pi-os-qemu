@@ -42,6 +42,7 @@ Experimenting with these features is difficult with commodity kernels due to the
 
 ## Documentation
 * [Aarch64 cheatsheet](aarch64-cheatsheet.md)
+  * [AArch64 Full Beginner's Assembly Tutorial](https://mariokartwii.com/armv8/)
   * [Official Aarch64 ISA doc](https://developer.arm.com/documentation/ddi0602/latest/)
   * [Official Aarch64 registers doc](https://developer.arm.com/documentation/ddi0601/latest/)
   * [Official Aarch64/Aarch32 address translation doc](https://developer.arm.com/documentation/100940/latest/)
