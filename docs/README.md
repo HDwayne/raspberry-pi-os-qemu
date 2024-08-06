@@ -5,42 +5,7 @@ Start with minimal, baremetal code. Then add kernel features in small doses.
 Each experiment is self-contained and can run on both Rpi3 hardware and QEMU.
 Experiment descriptions are for you to read & reproduce.
 
-**Get the code**:
-
-```sh
-git clone https://github.com/mpoquet/raspberry-pi-os-qemu
-```
-
-## Rationale
-The kernel must run on cheap & modern hardware.
-Showing the kernel's evolution path is important.
-Along the path, each version must be self-contained and runnable.
-
-We deem the following kernel functions crucial to implement:
-* protection modes
-* interrupt handling
-* preemptive scheduling
-* virtual memory
-
-Experimenting with these features is difficult with commodity kernels due to their complexity.
-
-## Goals
-**Primary:**
-* Learning by doing: the core concepts of a modern OS kernel
-* Experiencing OS engineering: hands-on programming & debugging at the hardware/software boundary
-* Daring to plumb: working with baremetal hardware: CPU protection modes, registers, IO, MMU, etc.
-
-**Secondary:**
-* Aarch64 programming
-* Working with C and assembly
-* Cross-platform development
-
-**Non-goals:**
-* Non-core or advanced functions of OS kernel, *e.g.*, filesystem or power management, which can be learnt via experimenting with commodity OS
-* Rpi3-specific hardware details. The SoC of Rpi3 is notoriously unfriendly to kernel hackers
-* Implementation details of commodity kernels, *e.g.*, Linux or Windows
-
-## Documentation
+## Helpful documentation and tutorials
 * [Aarch64 cheatsheet](aarch64-cheatsheet.md)
   * [AArch64 Full Beginner's Assembly Tutorial](https://mariokartwii.com/armv8/)
   * [Official Aarch64 ISA doc](https://developer.arm.com/documentation/ddi0602/latest/)
