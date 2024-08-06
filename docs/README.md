@@ -1,9 +1,7 @@
-# A tiny, modern kernel for Raspberry Pi 3
+# A tiny educational kernel for Raspberry Pi 3
 A tiny kernel *incrementally built* for OS education.
 Start with minimal, baremetal code. Then add kernel features in small doses.
-
-Each experiment is self-contained and can run on both Rpi3 hardware and QEMU.
-Experiment descriptions are for you to read & reproduce.
+Each experiment is self-contained and can run on both QEMU and real Raspberry Pi 3 hardware.
 
 ## Helpful documentation and tutorials
 * [Aarch64 cheatsheet](aarch64-cheatsheet.md)
