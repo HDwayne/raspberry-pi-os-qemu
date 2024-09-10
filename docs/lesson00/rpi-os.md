@@ -6,18 +6,18 @@ git clone https://github.com/mpoquet/raspberry-pi-os-qemu
 
 ## Development toolchain
 ### Compilation
-- If your host machine runs on Linux but not on Aarch64,
-  you need a `gcc` cross-compilation toolchain that targets the Aarch64 architecture.
+- If your host machine runs on Linux but not on AArch64,
+  you need a `gcc` cross-compilation toolchain that targets the AArch64 architecture.
   All decent Linux distributions should directly provide such toolchain in their packages.
   A Nix flake is provided at the root of this repository to install a tested cross-compilation toolchain on any Linux.
-- If your host machine already runs an Aarch64 Linux, you just need a normal `gcc` compilation toolchain.
-- If you are running MacOS on Aarch64, you can try `aarch64-elf-gcc` on homebrew.
+- If your host machine already runs an AArch64 Linux, you just need a normal `gcc` compilation toolchain.
+- If you are running MacOS on AArch64, you can try `aarch64-elf-gcc` on homebrew.
 - If you are not running Linux, install a Linux.  
   A VM installation should be enough, as we will not measure performance overhead in this course.
 
 ### Other tools
 - You need a way to run the provided Makefiles. They have been tested using `gnumake-4.4.1`.
-- Having a debugger that understands Aarch64 is highly recommended. The provided tested debugger is `gdb-14.2`.
+- Having a debugger that understands AArch64 is highly recommended. The provided tested debugger is `gdb-14.2`.
 - Utilities to inspect binary files is recommended. These tools are very often packaged as `binutils`.
 
 ### Testing your development toolchain
@@ -52,7 +52,7 @@ This is where you run the kernel code.
 ### QEMU
 We will only run the kernels via [QEMU](https://www.qemu.org/) in this course.
 
-You need a QEMU that supports target architecture Aarch64, and that can run systems (not only user programs).
+You need a QEMU that supports target architecture AArch64, and that can run systems (not only user programs).
 Such a QEMU should be available in any decent Linux distribution.
 For MacOS users, the `qemu` package seems to work.
 

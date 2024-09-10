@@ -1,4 +1,4 @@
-# Aarch64 cheat sheet
+# AArch64 cheat sheet
 
 ## General purpose registers
 
@@ -171,9 +171,9 @@ The GNU toolchain however elected the official "aarch64" name for the port, so t
 
 This page incorporates many contents from various sources.
 
-* ARM documentation on Aarch64 ISA, https://developer.arm.com/documentation/ddi0602/latest/
-* ARM documentation on Aarch64 registers, https://developer.arm.com/documentation/ddi0601/latest/
-* ARM documentation on Aarch64/Aarch32 address translation, https://developer.arm.com/documentation/100940/latest/
+* ARM documentation on AArch64 ISA, https://developer.arm.com/documentation/ddi0602/latest/
+* ARM documentation on AArch64 registers, https://developer.arm.com/documentation/ddi0601/latest/
+* ARM documentation on AArch64/Aarch32 address translation, https://developer.arm.com/documentation/100940/latest/
 * "arm64 assembly crash course", https://github.com/Siguza/ios-resources/blob/master/bits/arm64.md
 * https://linux-sunxi.org/Arm64#ARM64_cheat_sheet
 * https://wiki.cdot.senecacollege.ca/wiki/AArch64_Register_and_Instruction_Quick_Start

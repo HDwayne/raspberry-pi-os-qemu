@@ -2,7 +2,7 @@
 
 ## GDB Installation
 
-You need a decent GDB (various fixes around Aarch64 have been made in 2016-2017),
+You need a decent GDB (various fixes around AArch64 have been made in 2016-2017),
 which should be available in any decent Linux distribution.
 
 ## The workflow

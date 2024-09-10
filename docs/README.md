@@ -4,11 +4,11 @@ Start with minimal, baremetal code. Then add kernel features in small doses.
 Each experiment is self-contained and can run on both QEMU and real Raspberry Pi 3 hardware.
 
 ## Helpful documentation and tutorials
-* [Aarch64 cheatsheet](aarch64-cheatsheet.md)
+* [AArch64 cheatsheet](aarch64-cheatsheet.md)
   * [AArch64 Full Beginner's Assembly Tutorial](https://mariokartwii.com/armv8/)
-  * [Official Aarch64 ISA doc](https://developer.arm.com/documentation/ddi0602/latest/)
-  * [Official Aarch64 registers doc](https://developer.arm.com/documentation/ddi0601/latest/)
-  * [Official Aarch64/Aarch32 address translation doc](https://developer.arm.com/documentation/100940/latest/)
+  * [Official AArch64 ISA doc](https://developer.arm.com/documentation/ddi0602/latest/)
+  * [Official AArch64 registers doc](https://developer.arm.com/documentation/ddi0601/latest/)
+  * [Official AArch64/Aarch32 address translation doc](https://developer.arm.com/documentation/100940/latest/)
 * [QEMU cheetsheet](qemu.md)
 * [Using GDB to debug kernel](gdb.md)
 * [Inspect kernel binary](inspect-kernel-binary.md)

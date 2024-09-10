@@ -79,7 +79,7 @@ Let's inspect this file in detail:
 CHAINPREFIX ?= aarch64-linux-gnu-
 ```
 
-The Makefile starts with a variable definition. `CHAINPREFIX` is a prefix to your compilation toolchain. This is useful when using a [cross-compiler](https://en.wikipedia.org/wiki/Cross_compiler), which you will need to compile to the Aarch64 target unless you are running a native Aarch64 host. So instead of directly calling `gcc`, `make` will call `aarch64-linux-gnu-gcc` by default. You can set the `CHAINPREFIX` environment variable to your needs without needing to change the Makefile.
+The Makefile starts with a variable definition. `CHAINPREFIX` is a prefix to your compilation toolchain. This is useful when using a [cross-compiler](https://en.wikipedia.org/wiki/Cross_compiler), which you will need to compile to the AArch64 target unless you are running a native AArch64 host. So instead of directly calling `gcc`, `make` will call `aarch64-linux-gnu-gcc` by default. You can set the `CHAINPREFIX` environment variable to your needs without needing to change the Makefile.
 
 ```makefile
 COPS = -Wall -nostdlib -fno-stack-protector -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0 -DUSE_QEMU
@@ -279,7 +279,7 @@ After cleaning the `.bss` section, the kernel initializes the stack pointer and 
 
 **Aside: Some ARM64 instructions used**
 
-For those of you who are not familiar with Aarch64 assembler syntax, let me quickly summarize the instructions that we have used:
+For those of you who are not familiar with AArch64 assembler syntax, let me quickly summarize the instructions that we have used:
 
 * [**mrs**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289881374.htm) Load value from a system register to one of the general purpose registers (x0–x30)
 * [**and**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289863017.htm) Perform the logical AND operation. We use this command to strip the last byte from the value we obtain from the `mpidr_el1` register.
@@ -290,7 +290,7 @@ For those of you who are not familiar with Aarch64 assembler syntax, let me quic
 * [**bl**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289865686.htm) "Branch with a link": perform an unconditional branch and store the return address in x30 (the link register). When the subroutine is finished, use the `ret` instruction to jump back to the return address.
 * [**mov**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289878994.htm) Move a value between registers or from a constant to a register.
 
-Our [cheat sheet](../aarch64-cheatsheet.md) summarizes common Aarch64 instructions.
+Our [cheat sheet](../aarch64-cheatsheet.md) summarizes common AArch64 instructions.
 
 ### The `kernel_main` function
 
