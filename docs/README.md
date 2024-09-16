@@ -12,6 +12,7 @@ Each experiment is self-contained and can run on both QEMU and real Raspberry Pi
 * [QEMU cheetsheet](qemu.md)
 * [Using GDB to debug kernel](gdb.md)
 * [Inspect kernel binary](inspect-kernel-binary.md)
+* [Official Raspberry Pi boot sequence documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#boot-sequence)
 
 ## Experiments
 0. **Getting started**
