@@ -415,7 +415,7 @@ Here we first update compare register so that that next interrupt will be genera
 ## Hacking tips -- tracing interrupts with QEMU
 
 ```sh
-qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img \
+qemu-system-aarch64 -M raspi3b -kernel ./kernel8.img \
   -serial null -serial stdio \
   -d int -D test.log
 ```

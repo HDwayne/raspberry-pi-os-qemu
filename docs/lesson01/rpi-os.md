@@ -358,7 +358,7 @@ The GPIO can be used to configure the behavior of different GPIO pins. For examp
 
 The following init code configures pin 14 & 15 as UART in/out, sets up UART clock and its modes, etc.
 
-> Much of the UART init code is irrelevant to QEMU. Since QEMU "emulates" the UARTs, it can dump whatever our kernel writes to the emulated UART registers to stdio. Example: ``qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio``
+> Much of the UART init code is irrelevant to QEMU. Since QEMU "emulates" the UARTs, it can dump whatever our kernel writes to the emulated UART registers to stdio. Example: ``qemu-system-aarch64 -M raspi3b -kernel ./kernel8.img -serial null -serial stdio``
 >
 > The first -serial means UART0 which we do not touch; the second -serial means we direct UART1 to stdio.
 
