@@ -1,3 +1,5 @@
+// XZR - register that always contains zero
+
 .globl memzero
 memzero:
 	str xzr, [x0], #8
