@@ -18,31 +18,43 @@ proc_hang:				// Hang here infinitely
 	b 	proc_hang
 
 master:
-	ldr	x0, =SCTLR_VALUE_MMU_DISABLED // System control register
-	msr	sctlr_el1, x0
+	ldr	x0, =SCTLR_VALUE_MMU_DISABLED
+	msr	sctlr_el1, x0 	// SCTLR. data little-endian, instruction cache disabled, data cache disabled, MMU disabled
 
-	ldr	x0, =HCR_VALUE  	// Hypervisor Configuration (EL2)
-	msr	hcr_el2, x0
+	ldr	x0, =HCR_VALUE
+	msr	hcr_el2, x0		// Hypervisor Configuration Register. EL1 is AArch64, EL0 is AArch64
 
-#ifdef USE_QEMU 		// xzl: qemu boots from EL2. cannot do things to EL3
-	ldr	x0, =SPSR_VALUE
-	msr	spsr_el2, x0
-
-	#adr	x0, el1_entry
-	adr x0, el1_entry_another
-	msr	elr_el2, x0
-#else 					// xzl: Rpi3 hw boots from EL3.
-	ldr	x0, =SCR_VALUE	// Secure config register. Only at EL3.
-	msr	scr_el3, x0
+#ifdef USE_QEMU 		// QEMU Emulator (from EL2)
 
 	ldr	x0, =SPSR_VALUE
-	msr	spsr_el3, x0
+	msr	spsr_el2, x0	// Saved Program Status Register (EL3).
+
+	#adr x0, kernel_entry
+	adr x0, switch_to_el0
+	msr	elr_el2, x0		// EL2 to point to entry point for EL1.
+
+#else 					// Raspberry Pi 3 Hardware (from EL3)
+
+	ldr	x0, =SCR_VALUE
+	msr	scr_el3, x0		// Secure Configuration Register. EL3 is in AArch64 state, EL3 is in Non-secure state
+
+	ldr	x0, =SPSR_VALUE
+	msr	spsr_el3, x0	// EL2 to mask all interrupts and set the processor state
 
 	adr	x0, el1_entry
-	msr	elr_el3, x0
+	msr	elr_el3, x0		// EL3 to point to entry point for EL1.
+
 #endif
 
 	eret
+
+switch_to_el0:
+    ldr x0, =SPSR_VALUE_EL0
+    msr spsr_el1, x0
+
+    adr x0, kernel_entry
+    msr elr_el1, x0
+    eret
 
 el1_entry:
 	adr	x0, bss_begin
@@ -50,7 +62,8 @@ el1_entry:
 	sub	x1, x1, x0		// Calculate BSS size into x1 (x1 is passed as argument to memzero)
 	bl 	memzero 		// Clear BSS
 
-el1_entry_another:
-	mov	sp, #LOW_MEMORY // Set stack pointer
-	bl	kernel_main		// Call kernel_main
-	b 	proc_hang		// should never come here
+kernel_entry:
+	mov	sp, #LOW_MEMORY
+    bl kernel_main
+    b proc_hang			// Infinite loop (shouldn't return).
+
