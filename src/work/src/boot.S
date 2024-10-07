@@ -29,8 +29,8 @@ master:
 	ldr	x0, =SPSR_VALUE
 	msr	spsr_el2, x0	// Saved Program Status Register (EL3).
 
-	#adr x0, kernel_entry
-	adr x0, switch_to_el0
+	adr x0, el1_entry
+	#adr x0, switch_to_el0
 	msr	elr_el2, x0		// EL2 to point to entry point for EL1.
 
 #else 					// Raspberry Pi 3 Hardware (from EL3)

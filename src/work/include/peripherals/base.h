@@ -7,5 +7,6 @@
 // #define PBASE 0x7E000000
 
 #define PBASE 0x3F000000 // Physical base address of the Raspberry Pi 3
+#define LPBASE 0x40000000
 
 #endif  /*_P_BASE_H */
